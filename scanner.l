@@ -5,8 +5,6 @@ void yyerror (char *s);
 int yylex();
 %}
 %%
-
-
 "print"				   {return print;}
 "exit"				   {return exit_command;}
 [a-zA-Z]			   {yylval.id = yytext[0]; return identifier;}
@@ -14,7 +12,6 @@ int yylex();
 [ \t\n]                ;
 [-+=;]           	   {return yytext[0];}
 .                      {ECHO; yyerror ("unexpected character");}
-
 
 %%
 int yywrap (void) {return 1;}
