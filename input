@@ -1,2 +1,3 @@
-a = 1 + 1000;
-print a;
+abfd = 1 + 1000;
+abfd = abdf + 6;
+print abfd;
