@@ -13,7 +13,8 @@ int yylex();
 [a-zA-Z]+			   {strcpy(yylval.id, yytext); return identifier;}
 [0-9]+                 {yylval.num = atoi(yytext); return number;}
 [ \t\n]                ;
-[-+=;]           	   {return yytext[0];}
+[-+=*/;]           	   {return yytext[0];}
+[()]                   ;
 .                      {ECHO; yyerror ("unexpected character");}
 
 %%

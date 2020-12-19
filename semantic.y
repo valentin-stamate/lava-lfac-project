@@ -17,7 +17,7 @@ int symbols_values[MAX_VAR];
 
 int symbolVal(char*);
 void updateSymbolVal(char*, int);
-
+void FloatingPointException(int);
 %}
 
 %union {int num; char id[20];}         /* Yacc definitions */
@@ -46,6 +46,12 @@ assignment : identifier '=' exp  { updateSymbolVal($1,$3); }
 exp    	: term                  {$$ = $1;}
        	| exp '+' term          {$$ = $1 + $3;}
        	| exp '-' term          {$$ = $1 - $3;}
+     	| '(' exp '+' term ')'         {$$ = $2 + $4;}
+       	| '(' exp '-' term ')'         {$$ = $2 - $4;}
+       	| exp '*' term          {$$ = $1 * $3;}
+     	| '(' exp '*' term ')'         {$$ = $2 * $4;}
+        | exp '/' term          {FloatingPointException($3);$$ = $1 / $3;}
+     	| '(' exp '/' term ')'         {FloatingPointException($4);$$ = $2 / $4;}
        	;
 term   	: number                {$$ = $1;}
 		| identifier			{$$ = symbolVal($1);} 
@@ -74,6 +80,14 @@ void updateSymbolVal(char* symbol, int val) {
 	symbols_values[i] = val;
 }
 
+void FloatingPointException(int val)
+{
+	if(!val)
+    	{
+			printf("Nu se poate imparti la 0\n");
+		    exit(0);
+		}
+}
 int main (void) {
 
 	for (int i = 0; i < MAX_VAR; i++) {
