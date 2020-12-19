@@ -2,17 +2,25 @@
 void yyerror (char *s);
 int yylex();
 #include <stdio.h>     /* C declarations used in actions */
-extern FILE* yyin;
-extern char* yytext;
-extern int yylineno;
+#include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-int symbols[52];
-int symbolVal(char symbol);
-void updateSymbolVal(char symbol, int val);
+
+extern char* yytext;
+extern FILE* yyin;
+extern int yylineno;
+
+#define MAX_VAR 512
+
+char symbols[MAX_VAR][20];
+int symbols_values[MAX_VAR];
+
+int symbolVal(char*);
+void updateSymbolVal(char*, int);
+
 %}
 
-%union {int num; char id;}         /* Yacc definitions */
+%union {int num; char id[20];}         /* Yacc definitions */
 %start line
 %token print
 %token exit_command
@@ -43,45 +51,39 @@ term   	: number                {$$ = $1;}
 		| identifier			{$$ = symbolVal($1);} 
         ;
 
-%%                     /* C code */
+%%
 
-int computeSymbolIndex(char token)
-{
-	int idx = -1;
-	if(islower(token)) {
-		idx = token - 'a' + 26;
-	} else if(isupper(token)) {
-		idx = token - 'A';
+int computeSymbolIndex(char* token) {
+	for (int i = 0; i < MAX_VAR; i++) {
+		if (strcmp(token, symbols[i]) == 0) {
+			return i;
+		}
 	}
-	return idx;
+	return -1;
 } 
 
 
-/* returns the value of a given symbol */
-int symbolVal(char symbol)
-{
-	int bucket = computeSymbolIndex(symbol);
-	return symbols[bucket];
+
+int symbolVal(char* symbol) {
+	int i = computeSymbolIndex(symbol);
+	return symbols_values[i];
 }
 
-/* updates the value of a given symbol */
-void updateSymbolVal(char symbol, int val)
-{
-	int bucket = computeSymbolIndex(symbol);
-	symbols[bucket] = val;
+void updateSymbolVal(char* symbol, int val) {
+	int i = computeSymbolIndex(symbol);
+	symbols_values[i] = val;
 }
 
 int main (void) {
-	/* init symbol table */
+
+	for (int i = 0; i < MAX_VAR; i++) {
+		strcpy(symbols[i], "");
+		symbols_values[i] = 0;
+	}
 
     yyin = fopen("input", "r");
 
-	int i;
-	for(i=0; i<52; i++) {
-		symbols[i] = 0;
-	}
-
-	return yyparse ( );
+	return yyparse();
 }
 
 void yyerror (char *s) {fprintf (stderr, "%s\n", s);} 
