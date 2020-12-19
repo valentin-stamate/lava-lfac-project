@@ -1,3 +1,3 @@
 git add .
-git commit -m "ceva nou 2"
+git commit -m "operatori */"
 git push origin Laurentiu
