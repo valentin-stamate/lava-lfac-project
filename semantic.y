@@ -56,6 +56,7 @@ int computeSymbolIndex(char token)
 	return idx;
 } 
 
+
 /* returns the value of a given symbol */
 int symbolVal(char symbol)
 {
