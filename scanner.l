@@ -5,6 +5,8 @@ void yyerror (char *s);
 int yylex();
 %}
 %%
+
+
 "print"				   {return print;}
 "exit"				   {return exit_command;}
 [a-zA-Z]			   {yylval.id = yytext[0]; return identifier;}
