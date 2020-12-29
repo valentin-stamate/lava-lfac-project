@@ -13,12 +13,12 @@ int yylex();
 "Integer"              {yylval.type_id = Integer; return Integer;}
 "Float"                {yylval.type_id = Float; return Float;}
 "Double"               {yylval.type_id = Double; return Double;}
-"Character"            {yylval.type_id = Character; return Character;}
+"Char"                  {yylval.type_id = Character; return Character;}
 "String"               {yylval.type_id = String; return String;}
 "Bool"                 {yylval.type_id = Bool; return Bool;}
 [a-zA-Z]+			   {strcpy(yylval.id, yytext); return identifier;}
-["][a-zA-Z]*["]        {strcpy(yylval.string, yytext + 1); yylval.string[strlen(yytext + 1) - 1] = '\0'; return String_Value;}
-['][.][']              {yylval.ch = yytext[0]; return Character_Value;}
+["].*["]               {strcpy(yylval.string, yytext + 1); yylval.string[strlen(yytext + 1) - 1] = '\0'; return String_Value;}
+['].[']                {yylval.num = (int)yytext[1]; return Character_Value;}
 [0-9]+                 {yylval.num = atoi(yytext); return number;}
 [ \t\n]                ;
 [-+=*/;]           	   {return yytext[0];}
