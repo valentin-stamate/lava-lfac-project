@@ -1,3 +1,4 @@
-abfd = 6 / 1;
+integer n = 8;
+print n;
 
-print abfd;
+
