@@ -44,7 +44,7 @@ char* symbolValStr(char*);
 %token <type_id> Bool
 %token <type_id> String
 
-%token <ch> Character_Value
+%token <num> Character_Value
 %token <string> String_Value
 
 %token exit_command
@@ -88,6 +88,7 @@ exp    	: term                      {$$ = $1;}
      	| '(' exp '*' term ')'      {$$ = $2 * $4;}
         | exp '/' term          	{FloatingPointException($3);$$ = $1 / $3;}
      	| '(' exp '/' term ')'      {FloatingPointException($4);$$ = $2 / $4;}
+		| Character_Value			{$$ = $1;}
        	;
 
 str_exp : str_term			{strcpy($$, $1);}
@@ -195,6 +196,9 @@ void printValue(int type_id, double value) {
 			break;
 		case Bool:
 			printf("%d\n", value != 0);
+		case Character: 
+			printf("%c\n", (char)value);
+			break;
 		default:
 			break;
 	}
