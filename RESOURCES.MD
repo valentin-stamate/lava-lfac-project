@@ -10,3 +10,5 @@ https://stackoverflow.com/questions/4264127/correct-format-specifier-for-double-
 https://stackoverflow.com/questions/26211770/how-to-detect-error-line-number-using-yacc-parser
 
 https://docs.python.org/3/library/re.html
+
+https://profs.info.uaic.ro/~otto/LFAC_Lab1/LEX.pdf
