@@ -10,6 +10,7 @@ int yylex();
 %%
 "print"				   {return print;}
 "exit"				   {return exit_command;}
+"integer"                  {return integer;}
 [a-zA-Z]+			   {strcpy(yylval.id, yytext); return identifier;}
 [0-9]+                 {yylval.num = atoi(yytext); return number;}
 [ \t\n]                ;
