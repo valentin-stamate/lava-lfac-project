@@ -44,6 +44,9 @@ char* symbolValStr(char*);
 %token <type_id> Bool
 %token <type_id> String
 
+%token p_l
+%token p_r
+
 %token <num> Character_Value
 %token <string> String_Value
 
@@ -80,14 +83,11 @@ assignment  : identifier '=' exp  { updateSymbolVal($1,$3); }
 			| String identifier '=' String_Value {pushStr($2, $4);}
 			;
 exp    	: term                      {$$ = $1;}
-       	| exp '+' term              {$$ = $1 + $3;}
-       	| exp '-' term              {$$ = $1 - $3;}
-     	| '(' exp '+' term ')'      {$$ = $2 + $4;}
-       	| '(' exp '-' term ')'      {$$ = $2 - $4;}
-       	| exp '*' term              {$$ = $1 * $3;}
-     	| '(' exp '*' term ')'      {$$ = $2 * $4;}
-        | exp '/' term          	{FloatingPointException($3);$$ = $1 / $3;}
-     	| '(' exp '/' term ')'      {FloatingPointException($4);$$ = $2 / $4;}
+     	| '(' exp ')'				{$$ = $2;}
+       	| exp '+' exp              {$$ = $1 + $3;}
+       	| exp '-' exp              {$$ = $1 - $3;}
+       	| exp '*' exp              {$$ = $1 * $3;}
+        | exp '/' exp          	{FloatingPointException($3);$$ = $1 / $3;}
 		| Character_Value			{$$ = $1;}
        	;
 
