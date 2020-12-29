@@ -21,12 +21,19 @@ int symbolVal(char*);
 void updateSymbolVal(char*, double);
 void FloatingPointException(int);
 void push(char*, double);
+void printValue(int, double);
 %}
 
-%union {double num; char id[20];}         /* Yacc definitions */
+%union {double num; char id[20]; int type_id;}         /* Yacc definitions */
 %start line
 %token print
-%token integer
+
+%type <type_id> data_type
+%token <type_id> Integer
+%token <type_id> Float
+%token <type_id> Double
+%token <type_id> Character 
+
 %token exit_command
 %token <num> number
 %token <id> identifier
@@ -41,12 +48,18 @@ line    : assignment ';'		{;}
 		| exit_command ';'		{exit(EXIT_SUCCESS);}
 		| print exp ';'			{printf("Printing %f %d\n", $2, totalVar);}
 		| line assignment ';'	{;}
-		| line print exp ';'	{printf("Printing %f %d\n", $3, totalVar);}
+		| line print data_type exp ';'	{printValue($3, $4);}
 		| line exit_command ';'	{exit(EXIT_SUCCESS);}
         ;
 
+data_type   : Integer   	 {$$ = $1;}
+			| Float			 {$$ = $1;}
+			| Double		 {$$ = $1;}
+			| Character 	 {$$ = $1;}
+			;
+
 assignment  : identifier '=' exp  { updateSymbolVal($1,$3); }
-			| integer identifier '=' exp { push($2, $4); }
+			| data_type identifier '=' exp { push($2, $4); }
 			;
 exp    	: term                  {$$ = $1;}
        	| exp '+' term          {$$ = $1 + $3;}
@@ -69,6 +82,7 @@ int computeSymbolIndex(char* varName) {
 			return i;
 		}
 	}
+	
 	return -1;
 } 
 
@@ -83,9 +97,9 @@ void updateSymbolVal(char* symbol, double val) {
 	int i = computeSymbolIndex(symbol);
 
 	if (i == -1) {
-		printf("Variable %s was not declared in this scope\n", symbol);
+		printf("Variable %s was not declared in this scope %d\n", symbol, print);
 		exit(0);
-	}
+	} 
 
 	symbols_values[i] = val;
 }
@@ -111,6 +125,22 @@ void push(char* symbol, double val) {
 	symbols_values[totalVar] = val;
 	totalVar++;
 
+}
+
+void printValue(int type_id, double value) {
+	switch (type_id) {
+		case Integer:
+			printf("%d\n", (int)value); 
+			break;
+		case Float:
+			printf("%f\n", (float)value);
+			break;
+		case Double:
+			printf("%f", (double)value);
+			break;
+		default:
+			break;
+	}
 }
 
 int main (void) {
