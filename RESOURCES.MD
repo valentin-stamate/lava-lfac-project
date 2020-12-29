@@ -6,3 +6,7 @@ https://youtu.be/__-wUHG2rfM
 
 Printf double
 https://stackoverflow.com/questions/4264127/correct-format-specifier-for-double-in-printf
+
+
+https://stackoverflow.com/questions/26211770/how-to-detect-error-line-number-using-yacc-parser
+
