@@ -44,8 +44,10 @@ char* symbolValStr(char*);
 %token <type_id> Bool
 %token <type_id> String
 
-%token p_l
-%token p_r
+%token geq
+%token leq
+%token AND
+%token OR
 
 %token <num> Character_Value
 %token <string> String_Value
@@ -55,6 +57,7 @@ char* symbolValStr(char*);
 %token <id> identifier
 %type <num> line exp term 
 %type <string> str_exp str_term
+%type <num> cdt
 %type <id> assignment
 
 %%
@@ -82,14 +85,25 @@ assignment  : identifier '=' exp  { updateSymbolVal($1,$3); }
 			| data_type identifier '=' exp { push($2, $4); }
 			| String identifier '=' String_Value {pushStr($2, $4);}
 			;
-exp    	: term                      {$$ = $1;}
-     	| '(' exp ')'				{$$ = $2;}
+exp    	: term                     {$$ = $1;}
+		| cdt                      {$$ = $1;}
+     	| '(' exp ')'			   {$$ = $2;}
        	| exp '+' exp              {$$ = $1 + $3;}
        	| exp '-' exp              {$$ = $1 - $3;}
        	| exp '*' exp              {$$ = $1 * $3;}
-        | exp '/' exp          	{FloatingPointException($3);$$ = $1 / $3;}
-		| Character_Value			{$$ = $1;}
-       	;
+        | exp '/' exp          	   {FloatingPointException($3);$$ = $1 / $3;}
+		| Character_Value		   {$$ = $1;}
+
+		| exp AND cdt              {$$ = $1 && $3;}
+		| exp OR cdt               {$$ = $1 || $3;}
+		;
+
+cdt 	: term					     {$$ = $1;}
+		| term '<' term              {$$ = $1 < $3;}
+		| term leq term              {$$ = $1 <= $3;}
+		| term '>' term              {$$ = $1 > $3;}
+		| term geq term              {$$ = $1 >= $3;}
+		;
 
 str_exp : str_term			{strcpy($$, $1);}
 		;
