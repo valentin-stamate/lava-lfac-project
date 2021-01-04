@@ -49,6 +49,13 @@ char* symbolValStr(char*);
 %token AND
 %token OR
 
+%type stat
+
+%token IF
+%type smtm smtm_type ELSE_ ELIF_
+%token ELSE
+%token ELIF
+
 %token <num> Character_Value
 %token <string> String_Value
 
@@ -68,11 +75,36 @@ line    : assignment ';'				{;}
 		| exit_command ';'				{exit(EXIT_SUCCESS);}
 		| print data_type exp ';'		{printValue($2, $3);}
 		| print String str_exp ';'		{printValueStr($3);}
-		| line assignment ';'			{;}
-		| line print data_type exp ';'	{printValue($3, $4);}
-		| line print String str_exp ';'	{printValueStr($4);}
-		| line exit_command ';'			{exit(EXIT_SUCCESS);}
+		| stat 							{;}
+
+		| line line 					{;}
 		;
+
+stat	: IF '(' exp ')' smtm				{;}
+		| IF '(' exp ')' smtm ELIF_ ELSE_ 	{;}
+		| IF '(' exp ')' smtm ELSE_ 		{;}
+		| IF '(' exp ')' smtm ELIF_		 	{;}
+		;
+
+ELSE_   : ELSE smtm 						{;}
+		;
+
+ELIF_   : ELIF '(' exp ')' smtm				{;}
+		| ELIF_ ELIF_						{;}
+		;
+
+smtm 	: '{' smtm_type '}'				{;}
+		| '{' '}'						{;}
+		;
+
+smtm_type 	: assignment ';'			{;}
+			| exp        ';'			{;}
+			| print data_type exp ';'	{printValue($2, $3);}
+			
+			| IF 						{;}
+			
+			| smtm_type smtm_type 		{;}
+		  	;
 
 data_type   : Integer   	 {$$ = $1;}
 			| Float			 {$$ = $1;}
