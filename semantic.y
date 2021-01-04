@@ -52,9 +52,12 @@ char* symbolValStr(char*);
 %type stat
 
 %token IF
-%type smtm smtm_type ELSE_ ELIF_
+%type smtm smtm_type smtm_fun ELSE_ ELIF_
 %token ELSE
 %token ELIF
+
+%token FUN RETURN
+%type FUNCTION
 
 %token <num> Character_Value
 %token <string> String_Value
@@ -76,35 +79,10 @@ line    : assignment ';'				{;}
 		| print data_type exp ';'		{printValue($2, $3);}
 		| print String str_exp ';'		{printValueStr($3);}
 		| stat 							{;}
-
+		| FUNCTION 				   		{;} 
 		| line line 					{;}
 		;
 
-stat	: IF '(' exp ')' smtm				{;}
-		| IF '(' exp ')' smtm ELIF_ ELSE_ 	{;}
-		| IF '(' exp ')' smtm ELSE_ 		{;}
-		| IF '(' exp ')' smtm ELIF_		 	{;}
-		;
-
-ELSE_   : ELSE smtm 						{;}
-		;
-
-ELIF_   : ELIF '(' exp ')' smtm				{;}
-		| ELIF_ ELIF_						{;}
-		;
-
-smtm 	: '{' smtm_type '}'				{;}
-		| '{' '}'						{;}
-		;
-
-smtm_type 	: assignment ';'			{;}
-			| exp        ';'			{;}
-			| print data_type exp ';'	{printValue($2, $3);}
-			
-			| IF 						{;}
-			
-			| smtm_type smtm_type 		{;}
-		  	;
 
 data_type   : Integer   	 {$$ = $1;}
 			| Float			 {$$ = $1;}
@@ -147,6 +125,40 @@ str_term : String_Value 			{strcpy($$, $1);}
 term   	: number                {$$ = $1;}
 		| identifier			{$$ = symbolVal($1);} 
         ;
+
+stat	: IF '(' exp ')' smtm				{;}
+		| IF '(' exp ')' smtm ELIF_ ELSE_ 	{;}
+		| IF '(' exp ')' smtm ELSE_ 		{;}
+		| IF '(' exp ')' smtm ELIF_		 	{;}
+		;
+
+ELSE_   : ELSE smtm 						{;}
+		;
+
+ELIF_   : ELIF '(' exp ')' smtm				{;}
+		| ELIF_ ELIF_						{;}
+		;
+
+smtm 	: '{' smtm_type '}'				{;}
+		| '{' '}'						{;}
+		;
+
+smtm_type 	: assignment ';'			{;}
+			| exp        ';'			{;}
+			| print data_type exp ';'	{printValue($2, $3);}
+
+			| stat 						{;}
+			
+			| smtm_type smtm_type   	{;}
+		  	;
+
+FUNCTION 	: data_type FUN '(' ')' smtm_fun 		{;}
+			;
+
+smtm_fun	: '{' smtm_type RETURN exp ';' '}' 		{;}
+			| '{' RETURN exp ';' '}'				{;}
+			;
+
 %%
 
 int computeSymbolIndex(char* varName) {

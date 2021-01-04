@@ -1,0 +1,26 @@
+Integer n = 2 + 3 * 4; 
+
+print Integer n;
+
+if (6) {
+    Integer h = 6;
+
+} elif (8) {
+   
+} elif (9) {
+
+} else {
+
+}
+
+Integer fun () {
+    
+    Integer l = 10;
+    
+    if (6) {} 
+    else {}
+
+    return 0;
+}
+
+print Integer 0 || 2 > 4 && 1 || 0;
