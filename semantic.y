@@ -33,7 +33,7 @@ char* symbolValStr(char*);
 %}
 
 %union {double num; char id[20]; int type_id; char string[1000]; char ch;}         /* Yacc definitions */
-%start line
+%start lines
 %token print
 
 %type <type_id> data_type
@@ -53,7 +53,7 @@ char* symbolValStr(char*);
 %type<num> stat
 
 %token IF
-%type<num> smtm smtm_type smtm_fun ELSE_ ELIF_
+%type<num> smtm smtm_type smtm_types smtm_fun ELSE_ ELIF_ ELIF_S
 %token ELSE
 %token ELIF
 
@@ -66,7 +66,7 @@ char* symbolValStr(char*);
 %token exit_command
 %token <num> number
 %token <id> identifier
-%type <num> line exp term 
+%type <num> line lines exp term 
 %type <string> str_exp str_term
 %type <id> assignment
 
@@ -88,13 +88,18 @@ char* symbolValStr(char*);
 
 /* descriptions of expected inputs     corresponding actions (in C) */
 
-line    : assignment ';'				{;}
+
+
+lines   : line			 			{;}
+		| lines line				{;}
+		;
+
+line 	: assignment ';'				{;}
 		| exit_command ';'				{exit(EXIT_SUCCESS);}
 		| print data_type exp ';'		{printValue($2, $3);}
 		| print String str_exp ';'		{printValueStr($3);}
 		| stat 							{;}
-		| FUNCTION 				   		{;} 
-		| line line 					{;}
+		| FUNCTION 				   		{;}
 		;
 
 
@@ -137,39 +142,43 @@ str_term : String_Value 			{strcpy($$, $1);}
 
 term   	: number                {$$ = $1;}
 		| identifier			{$$ = symbolVal($1);} 
-		| '(' term ')'			{$$ = $2;}
         ;
 
 stat	: IF '(' exp ')' smtm				{;}
-		| IF '(' exp ')' smtm ELIF_ ELSE_ 	{;}
+		| IF '(' exp ')' smtm ELIF_S ELSE_ 	{;}
 		| IF '(' exp ')' smtm ELSE_ 		{;}
-		| IF '(' exp ')' smtm ELIF_		 	{;}
+		| IF '(' exp ')' smtm ELIF_S	 	{;}
 		;
 
 ELSE_   : ELSE smtm 						{;}
 		;
 
-ELIF_   : ELIF '(' exp ')' smtm				{;}
-		| ELIF_ ELIF_						{;}
+ELIF_S  : ELIF_
+		| ELIF_S ELIF_
 		;
 
-smtm 	: '{' smtm_type '}'				{;}
+ELIF_   : ELIF '(' exp ')' smtm				{;}
+		;
+
+smtm 	: '{' smtm_types '}'				{;}
 		| '{' '}'						{;}
 		;
+
+smtm_types  : smtm_type 					{;}
+			| smtm_types smtm_type
+			;
 
 smtm_type 	: assignment ';'			{;}
 			| exp        ';'			{;}
 			| print data_type exp ';'	{printValue($2, $3);}
-
 			| stat 						{;}
-			
-			| smtm_type smtm_type   	{;}
-		  	;
+			;
+
 
 FUNCTION 	: data_type FUN '(' ')' smtm_fun 		{;}
 			;
 
-smtm_fun	: '{' smtm_type RETURN exp ';' '}' 		{;}
+smtm_fun	: '{' smtm_types RETURN exp ';' '}' 		{;}
 			| '{' RETURN exp ';' '}'				{;}
 			;
 
