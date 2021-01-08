@@ -16,10 +16,11 @@ int yylex();
 "Char"                 {yylval.type_id = Character; return Character;}
 "String"               {yylval.type_id = String; return String;}
 "Bool"                 {yylval.type_id = Bool; return Bool;}
-"<="                   {return leq;}
-">="                   {return geq;}
+"<="                   {return LEQ;}
+">="                   {return GEQ;}
 "&&"                   {return AND;}
 "||"                   {return OR;}
+"=="                   {return EQ;}
 
 "if"                   {return IF;}
 "else"                 {return ELSE;}
