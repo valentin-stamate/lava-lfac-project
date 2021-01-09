@@ -65,6 +65,8 @@ char* symbolValStr(char*);
 %token <num> Character_Value
 %token <string> String_Value
 
+%token EVAL
+
 %token exit_command
 %token <num> number
 %token <id> identifier
@@ -76,11 +78,12 @@ char* symbolValStr(char*);
 
 %right '='
 
+%left EQ
+%left GEQ LEQ '<' '>'
+
 %left '-' '+'
 %left '/' '*'
 
-%left EQ
-%left GEQ LEQ '<' '>'
 
 %left OR
 %left AND
