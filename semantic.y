@@ -339,8 +339,6 @@ void updateValue(char* id, struct var* exp) {
 		exit(0);
 	} 
 
-	struct var *vr = variables + i;
-
 	if (vr->type == String) {
 		sprintf(vr->valueStr, "%s", exp->valueStr);
 	} else {
