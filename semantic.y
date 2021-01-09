@@ -24,6 +24,7 @@ struct var {
 struct var* initializeVar();
 
 #define RED "\e[1;31m"
+#define GREEN "\e[1;32m"
 #define RESET "\e[0m"
 
 int totalVar = 0;
@@ -43,7 +44,7 @@ void pushEmptyVariable(char*, int);
 struct var* comp(struct var*, struct var*, int);
 void printValue(struct var*);
 void print_simbol_table(struct var*,int);
-
+void Eval_function(struct var*);
 
 %}
 
@@ -73,14 +74,13 @@ void print_simbol_table(struct var*,int);
 %token ELSE
 %token ELIF
 
-%token FUN RETURN
+%token FUN RETURN EVAL
 %type<num> FUNCTION
 
 %token <string> String_Value Character_Value
 
 %type <type_id> paramentru lista_param
 
-%token EVAL
 
 %token exit_command
 %token <num> number number_r
@@ -150,7 +150,7 @@ exp    	: term                     	{$$ = $1;}
        	| exp PLUS exp              {$$ = comp($1, $3, PLUS);} // todo if it's IDENTIFIER
        	| exp MINUS exp             {$$ = comp($1, $3, MINUS);}
        	| exp PROD exp              {$$ = comp($1, $3, PROD);}
-        | exp DIV exp          	   	{$$ = comp($1, $3, DIV);} // TODO 0 division
+        | exp DIV exp          	   	{$$ = comp($1, $3, DIV);}
 
 		| exp AND exp              	{$$ = comp($1, $3, AND);}
 		| exp OR exp               	{$$ = comp($1, $3, OR);}
@@ -202,6 +202,7 @@ smtm_type 	: assignment ';'			{;}
 
 
 FUNCTION 	: DATA_TYPE FUN '(' lista_param ')' smtm_fun 		{;}
+			| EVAL '(' exp ')' ';'                   {Eval_function($3);}
 			;
 
 lista_param : paramentru	 
@@ -217,6 +218,17 @@ smtm_fun	: '{' smtm_types RETURN exp ';' '}' 		{;}
 
 %%
 
+void Eval_function(struct var* x)
+{
+  if(x->type == Integer)
+  		printf(GREEN "%d\n" RESET,(int)x->value);
+  else
+  {
+	  	printf("Eval function must have an integer type parameter\n");
+		exit(0);
+  }
+   
+}
 
 void print_simbol_table(struct var* v,int n)
 {
@@ -448,8 +460,12 @@ struct var* comp(struct var* a, struct var* b, int op_type) {
 
 		v->value = a->value * b->value;
 		break;
-	case DIV:
-		v->type = Double;
+	case DIV:;
+		double c = a->value / b->value;
+		if (c == (int)c) 
+			v->type = Integer;
+		else
+			v->type = Double;
 		if (b->value == 0) {
 			printf("Division with 0 is not possible\n");
 			exit(0);
