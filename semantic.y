@@ -23,6 +23,9 @@ struct var {
 
 struct var* initializeVar();
 
+#define RED "\e[1;31m"
+#define RESET "\e[0m"
+
 int totalVar = 0;
 struct var variables[100];
 
@@ -69,6 +72,10 @@ void printValue(struct var*);
 
 %token <string> String_Value Character_Value
 
+%type <type_id> paramentru lista_param
+
+%token EVAL
+
 %token exit_command
 %token <num> number number_r
 %token <string> IDENTIFIER
@@ -82,15 +89,16 @@ void printValue(struct var*);
 
 %right EQUAL
 
+
 %left EQEQ
 %left GEQ LEQ LS GE
 
 %left MINUS PLUS
 %left DIV PROD
 
+
 %left OR
 %left AND
-
 
 %%
 
@@ -184,7 +192,16 @@ smtm_type 	: assignment ';'			{;}
 			;
 
 
-FUNCTION 	: DATA_TYPE FUN '(' ')' smtm_fun 		{;}
+
+FUNCTION 	: DATA_TYPE FUN '(' lista_param ')' smtm_fun 		{;}
+			;
+
+lista_param : paramentru	 
+			| lista_param ',' paramentru		
+			;
+
+paramentru  : DATA_TYPE IDENTIFIER
+
 			;
 
 smtm_fun	: '{' smtm_types RETURN exp ';' '}' 		{;}
@@ -426,4 +443,7 @@ int main (void) {
 	return yyparse();
 }
 
-void yyerror (char *s) {fprintf (stderr, "%s\n", s);} // TODO
+void yyerror (char *s) 
+{
+	printf (RED"Error: %s line %d\n"RESET, s,yylineno);
+} 

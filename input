@@ -1,3 +1,19 @@
 Integer a = 9 == 1 + 8;
 
+
 print 6 * 2.5;
+
+if (7) {
+
+} elif(8) {
+
+} elif(99) {
+
+}else {
+
+}
+
+Integer fun(Integer x,Float a) {
+    return 9;
+}
+
