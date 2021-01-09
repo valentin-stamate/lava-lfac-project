@@ -11,10 +11,8 @@ extern FILE* yyin;
 extern int yylineno;
 int lineError = 0;
 
-
 #define RED "\e[1;31m"
 #define RESET "\e[0m"
-
 #define MAX_VAR 100
 
 char symbols[MAX_VAR][20];
@@ -63,7 +61,7 @@ char* symbolValStr(char*);
 
 %token FUN RETURN
 %type<num> FUNCTION
-
+%type <type_id> paramentru lista_param
 %token <num> Character_Value
 %token <string> String_Value
 
@@ -179,7 +177,14 @@ smtm_type 	: assignment ';'			{;}
 			;
 
 
-FUNCTION 	: data_type FUN '(' ')' smtm_fun 		{;}
+FUNCTION 	: data_type FUN '(' lista_param ')' smtm_fun 		{;}
+			;
+
+lista_param : paramentru	 
+			| lista_param ',' paramentru		
+			;
+
+paramentru  : data_type identifier
 			;
 
 smtm_fun	: '{' smtm_types RETURN exp ';' '}' 		{;}
@@ -309,4 +314,3 @@ void yyerror (char *s)
 {
 	printf (RED"Error: %s line %d\n"RESET, s,yylineno);
 } 
-
