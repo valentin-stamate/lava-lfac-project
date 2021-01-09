@@ -201,7 +201,6 @@ lista_param : paramentru
 			;
 
 paramentru  : DATA_TYPE IDENTIFIER
-
 			;
 
 smtm_fun	: '{' smtm_types RETURN exp ';' '}' 		{;}
