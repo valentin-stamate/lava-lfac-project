@@ -35,7 +35,7 @@ int yylex();
 [0-9]+                 {yylval.num = atoi(yytext); return number;}
 [ \t]                  ;
 [\n]                   {yylineno++;}
-[-+=*/{};]             {return yytext[0];}
+[-+=*/{};,]            {return yytext[0];}
 .                      {ECHO; yyerror ("unexpected character");}
 
 %%
