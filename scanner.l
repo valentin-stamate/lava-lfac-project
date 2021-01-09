@@ -7,16 +7,6 @@
 void yyerror (char *s);
 int yylex();
 
-struct var {
-	int type;
-
-	char* identifier;
-	double value;
-	char* valueStr;
-
-	int cnst;
-};
-
 %}
 %%
 
@@ -48,6 +38,7 @@ struct var {
 "elif"                  {return ELIF;}
 "fun"                   {return FUN;}
 "return"                {return RETURN;}
+"Eval"					{return EVAL;}
 
 [()<>]                  {return yytext[0];}
 [a-zA-Z]+			    {strcpy(yylval.string, yytext); return IDENTIFIER;}
