@@ -33,7 +33,8 @@ int yylex();
 ["].*["]               {strcpy(yylval.string, yytext + 1); yylval.string[strlen(yytext + 1) - 1] = '\0'; return String_Value;}
 ['].[']                {yylval.num = (int)yytext[1]; return Character_Value;}
 [0-9]+                 {yylval.num = atoi(yytext); return number;}
-[ \t\n]                ;
+[ \t]                  ;
+[\n]                   {yylineno++;}
 [-+=*/{};]             {return yytext[0];}
 .                      {ECHO; yyerror ("unexpected character");}
 

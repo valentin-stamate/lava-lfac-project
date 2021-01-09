@@ -11,6 +11,10 @@ extern FILE* yyin;
 extern int yylineno;
 int lineError = 0;
 
+
+#define RED "\e[1;31m"
+#define RESET "\e[0m"
+
 #define MAX_VAR 100
 
 char symbols[MAX_VAR][20];
@@ -301,4 +305,8 @@ int main (void) {
 	return yyparse();
 }
 
-void yyerror (char *s) {fprintf (stderr, "%s\n", s);} // TODO
+void yyerror (char *s) 
+{
+	printf (RED"Error: %s line %d\n"RESET, s,yylineno);
+} 
+
