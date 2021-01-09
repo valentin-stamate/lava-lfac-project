@@ -38,9 +38,12 @@ int getVariableIndex(char*);
 void updateValue(char*, struct var*);
 void FloatingPointException(int);
 void pushVariable(char*, int, struct var*);
+void pushVariableConst(char*, int, struct var*);
 void pushEmptyVariable(char*, int);
 struct var* comp(struct var*, struct var*, int);
 void printValue(struct var*);
+void print_simbol_table(struct var*,int);
+
 
 %}
 
@@ -51,7 +54,10 @@ void printValue(struct var*);
 	struct var* strct;
 }     
 
-%start lines
+%start program
+
+
+
 %token print
 
 %type <type_id> DATA_TYPE
@@ -105,6 +111,8 @@ void printValue(struct var*);
 /* descriptions of expected inputs     corresponding actions (in C) */
 
 
+program : lines { print_simbol_table(variables,totalVar); printf("Program corect sintactic\n"); }
+		;
 
 lines   : line			 			{;}
 		| lines line				{;}
@@ -129,7 +137,7 @@ DATA_TYPE   : Integer   	 {$$ = $1;}
 assignment  : DATA_TYPE IDENTIFIER	 					{pushEmptyVariable($2, $1);}
 			| DATA_TYPE IDENTIFIER EQUAL exp  			{pushVariable($2, $1, $4);}
 		
-			| Const DATA_TYPE IDENTIFIER EQUAL exp  		{pushVariable($3, $2, $5);} // TODO const
+			| Const DATA_TYPE IDENTIFIER EQUAL exp  		{pushVariableConst($3, $2, $5);}
 
 			| DATA_TYPE IDENTIFIER '[' exp ']'			{pushEmptyVariable($2, $1);} // TODO exp
 
@@ -210,6 +218,49 @@ smtm_fun	: '{' smtm_types RETURN exp ';' '}' 		{;}
 %%
 
 
+void print_simbol_table(struct var* v,int n)
+{
+	FILE *fd;
+	fd = fopen("symbol_table.txt", "w");
+	if(fd == NULL)
+	{
+		char buffer[100];
+		sprintf(buffer, "Nu pot deschide fisierul symbol_table.txt.");
+		yyerror(buffer);
+		exit(0);
+	}
+ 	
+ 	for(int i=0;i<n;i++)
+	{
+		fprintf(fd,"nume : %s  ",v[i].id);
+		switch (v[i].type) {
+		case Integer:
+			fprintf(fd, "valoare = %d  ", (int)v[i].value);
+			break;
+		case Character:
+			fprintf(fd, "valoare = %c ", (char)v[i].value);
+			break;
+		case Float:
+			fprintf(fd, "valoare = %f ", (float)v[i].value);
+			break;
+		case Double:
+			fprintf(fd, "valoare = %f ", (double)v[i].value);
+			break;
+		case String:
+			fprintf(fd, "valoare = %s ", (char*)v[i].valueStr);
+			break;
+		default:
+			break;
+		}
+		if(v[i].cnst)
+			fprintf(fd, "constant \n");
+		else
+			fprintf(fd, "not constant \n");
+
+	}
+
+}
+
 struct var* temporaryPointNum(double val, int type) {
 	struct var *v = initializeVar();
 
@@ -240,6 +291,7 @@ struct var* temporaryPointVar(char* id) {
 		printf("Variable %s was not declared in this scope\n", id);
 		exit(0);
 	}
+
 
 	struct var *v = &variables[i];
 	struct var *exp = initializeVar();
@@ -280,7 +332,20 @@ void updateValue(char* id, struct var* exp) {
 	} 
 
 	struct var *vr = variables + i;
+	if(vr->cnst)
+	{
+		printf("Constat variable %s cannot be modified\n", id);
 
+		exit(0);
+	} 
+
+	struct var *vr = variables + i;
+
+	if (vr->type == String) {
+		sprintf(vr->valueStr, "%s", exp->valueStr);
+	} else {
+		vr->value = exp->value;
+	}
 	if (vr->type == String) {
 		sprintf(vr->valueStr, "%s", exp->valueStr);
 	} else {
@@ -337,6 +402,28 @@ void pushVariable(char* id, int type, struct var* exp) {
 		v->value = exp->value;
 	}
 
+	freeVar(exp);
+	totalVar++;
+}
+void pushVariableConst(char* id, int type, struct var* exp) {
+	int i = getVariableIndex(id);
+
+	if (i != -1) {
+		printf("The variable %s was already declared here\n", id);
+		exit(0);
+	}
+
+	struct var *v = variables + totalVar;
+	
+	sprintf(v->id, "%s", id);
+	v->type = type;
+
+	if (type == String) {
+		sprintf(v->valueStr, "%s", exp->valueStr);
+	} else {
+		v->value = exp->value;
+	}
+    v->cnst=1;
 	freeVar(exp);
 	totalVar++;
 }
@@ -425,6 +512,7 @@ void printValue(struct var* node) {
 	}
 
 }
+
 
 struct var* initializeVar() {
 	struct var* v = (struct var*)malloc(sizeof(struct var));
