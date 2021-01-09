@@ -27,6 +27,7 @@ int yylex();
 "elif"                 {return ELIF;}
 "fun"                  {return FUN;}
 "return"               {return RETURN;}
+"Eval"                 {return EVAL;}
 
 [()<>]                 {return yytext[0];}
 [a-zA-Z]+			   {strcpy(yylval.id, yytext); return identifier;}
