@@ -44,6 +44,7 @@ struct var* comp(struct var*, struct var*, int);
 void printValue(struct var*);
 void print_simbol_table(struct var*,int);
 
+
 %}
 
 %union {
@@ -52,7 +53,11 @@ void print_simbol_table(struct var*,int);
 	int type_id; 
 	struct var* strct;
 }     
+
 %start program
+
+
+
 %token print
 
 %type <type_id> DATA_TYPE
@@ -212,6 +217,7 @@ smtm_fun	: '{' smtm_types RETURN exp ';' '}' 		{;}
 
 %%
 
+
 void print_simbol_table(struct var* v,int n)
 {
 	FILE *fd;
@@ -254,6 +260,7 @@ void print_simbol_table(struct var* v,int n)
 	}
 
 }
+
 struct var* temporaryPointNum(double val, int type) {
 	struct var *v = initializeVar();
 
@@ -284,6 +291,7 @@ struct var* temporaryPointVar(char* id) {
 		printf("Variable %s was not declared in this scope\n", id);
 		exit(0);
 	}
+
 
 	struct var *v = &variables[i];
 	struct var *exp = initializeVar();
@@ -327,7 +335,16 @@ void updateValue(char* id, struct var* exp) {
 	if(vr->cnst)
 	{
 		printf("Constat variable %s cannot be modified\n", id);
+
 		exit(0);
+	} 
+
+	struct var *vr = variables + i;
+
+	if (vr->type == String) {
+		sprintf(vr->valueStr, "%s", exp->valueStr);
+	} else {
+		vr->value = exp->value;
 	}
 	if (vr->type == String) {
 		sprintf(vr->valueStr, "%s", exp->valueStr);
@@ -495,6 +512,7 @@ void printValue(struct var* node) {
 	}
 
 }
+
 
 struct var* initializeVar() {
 	struct var* v = (struct var*)malloc(sizeof(struct var));

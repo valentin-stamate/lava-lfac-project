@@ -1,7 +1,9 @@
 Integer a = 9 == 1 + 8;
+
 Const Integer b = 3;
 b=5;
 print 6 * 2;
+
 
 if (7) {
 
