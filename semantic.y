@@ -13,10 +13,13 @@ int lineError = 0;
 
 struct var {
 	int type;
-
+	int isArray;
+	
 	char id[100];
-	double value;
-	char valueStr[1000];
+
+	int arraySize;
+	double array[100];
+	char arrayStr[100][1000];
 
 	int cnst;
 };
@@ -24,7 +27,6 @@ struct var {
 struct var* initializeVar();
 
 #define RED "\e[1;31m"
-#define GREEN "\e[1;32m"
 #define RESET "\e[0m"
 
 int totalVar = 0;
@@ -33,6 +35,7 @@ struct var variables[100];
 struct var* temporaryPointNum(double, int);
 struct var* temporaryPointStr(void*, int);
 struct var* temporaryPointVar(char*);
+struct var* temporaryPointArr(char*, struct var*);
 
 void freeVar(struct var* v);
 int getVariableIndex(char*);
@@ -44,8 +47,9 @@ void pushEmptyVariable(char*, int);
 struct var* comp(struct var*, struct var*, int);
 void printValue(struct var*);
 void print_simbol_table(struct var*,int);
-void Eval_function(struct var*);
 
+void pushArray(char*, int, struct var*);
+void updateArrValue(char*, struct var*, struct var*);
 %}
 
 %union {
@@ -74,13 +78,14 @@ void Eval_function(struct var*);
 %token ELSE
 %token ELIF
 
-%token FUN RETURN EVAL
+%token FUN RETURN
 %type<num> FUNCTION
 
 %token <string> String_Value Character_Value
 
-%type <type_id> paramentru lista_param
+%type <type_id> paramentru lista_param more_params
 
+%token EVAL
 
 %token exit_command
 %token <num> number number_r
@@ -137,17 +142,18 @@ DATA_TYPE   : Integer   	 {$$ = $1;}
 assignment  : DATA_TYPE IDENTIFIER	 					{pushEmptyVariable($2, $1);}
 			| DATA_TYPE IDENTIFIER EQUAL exp  			{pushVariable($2, $1, $4);}
 		
-			| Const DATA_TYPE IDENTIFIER EQUAL exp  		{pushVariableConst($3, $2, $5);}
+			| Const DATA_TYPE IDENTIFIER EQUAL exp  	{pushVariableConst($3, $2, $5);}
 
-			| DATA_TYPE IDENTIFIER '[' exp ']'			{pushEmptyVariable($2, $1);} // TODO exp
+			| DATA_TYPE IDENTIFIER '[' exp ']'			{pushArray($2, $1, $4);}
 
-			| IDENTIFIER EQUAL exp   						{updateValue($1, $3);}
+			| IDENTIFIER EQUAL exp   					{updateValue($1, $3);}
+			| IDENTIFIER '[' exp ']' EQUAL exp			{updateArrValue($1, $3, $6);}
 			;
 
 
 exp    	: term                     	{$$ = $1;}
      	| '(' exp ')'			   	{$$ = $2;}
-       	| exp PLUS exp              {$$ = comp($1, $3, PLUS);} // todo if it's IDENTIFIER
+       	| exp PLUS exp              {$$ = comp($1, $3, PLUS);}
        	| exp MINUS exp             {$$ = comp($1, $3, MINUS);}
        	| exp PROD exp              {$$ = comp($1, $3, PROD);}
         | exp DIV exp          	   	{$$ = comp($1, $3, DIV);}
@@ -163,6 +169,7 @@ exp    	: term                     	{$$ = $1;}
 
 
 term	: IDENTIFIER			{$$ = temporaryPointVar($1);} 
+		| IDENTIFIER '[' exp ']'{$$ = temporaryPointArr($1, $3);}
    		| number                {$$ = temporaryPointNum($1, Integer);}
 		| number_r				{$$ = temporaryPointNum($1, Double);}
 		| Character_Value		{$$ = temporaryPointStr($1, Character);}
@@ -201,16 +208,20 @@ smtm_type 	: assignment ';'			{;}
 
 
 
-FUNCTION 	: DATA_TYPE FUN '(' lista_param ')' smtm_fun 		{;}
-			| EVAL '(' exp ')' ';'                   {Eval_function($3);}
+FUNCTION 	: DATA_TYPE FUN IDENTIFIER '(' lista_param ')' smtm_fun 		{;}
 			;
 
-lista_param : paramentru	 
-			| lista_param ',' paramentru		
+lista_param : more_params
+			| {;}
+			;
+
+more_params : paramentru
+			| more_params ',' paramentru
 			;
 
 paramentru  : DATA_TYPE IDENTIFIER
 			;
+
 
 smtm_fun	: '{' smtm_types RETURN exp ';' '}' 		{;}
 			| '{' RETURN exp ';' '}'				{;}
@@ -218,17 +229,6 @@ smtm_fun	: '{' smtm_types RETURN exp ';' '}' 		{;}
 
 %%
 
-void Eval_function(struct var* x)
-{
-  if(x->type == Integer)
-  		printf(GREEN "%d\n" RESET,(int)x->value);
-  else
-  {
-	  	printf("Eval function must have an integer type parameter\n");
-		exit(0);
-  }
-   
-}
 
 void print_simbol_table(struct var* v,int n)
 {
@@ -247,19 +247,19 @@ void print_simbol_table(struct var* v,int n)
 		fprintf(fd,"nume : %s  ",v[i].id);
 		switch (v[i].type) {
 		case Integer:
-			fprintf(fd, "valoare = %d  ", (int)v[i].value);
+			fprintf(fd, "valoare = %d  ", (int)v[i].array[0]);
 			break;
 		case Character:
-			fprintf(fd, "valoare = %c ", (char)v[i].value);
+			fprintf(fd, "valoare = '%c' ", (char)v[i].array[0]);
 			break;
 		case Float:
-			fprintf(fd, "valoare = %f ", (float)v[i].value);
+			fprintf(fd, "valoare = %f ", (float)v[i].array[0]);
 			break;
 		case Double:
-			fprintf(fd, "valoare = %f ", (double)v[i].value);
+			fprintf(fd, "valoare = %f ", (double)v[i].array[0]);
 			break;
 		case String:
-			fprintf(fd, "valoare = %s ", (char*)v[i].valueStr);
+			fprintf(fd, "valoare = \"%s\" ", (char*)v[i].arrayStr[0]);
 			break;
 		default:
 			break;
@@ -276,7 +276,7 @@ void print_simbol_table(struct var* v,int n)
 struct var* temporaryPointNum(double val, int type) {
 	struct var *v = initializeVar();
 
-	v->value = val;
+	v->array[0] = val;
 	v->type = type;
 
 	return v;
@@ -288,9 +288,9 @@ struct var* temporaryPointStr(void* val, int type) {
 	v->type = type;
 
 	if (type == String) {
-		sprintf(v->valueStr, "%s", (char*)val);
+		sprintf(v->arrayStr[0], "%s", (char*)val);
 	} else {
-		v->value = ((char*)val)[0];
+		v->array[0] = ((char*)val)[0];
 	}
 
 	return v;
@@ -305,18 +305,64 @@ struct var* temporaryPointVar(char* id) {
 	}
 
 
-	struct var *v = &variables[i];
+	// struct var *v = &variables[i];
+	// struct var *exp = initializeVar();
+
+	// exp->type = v->type;
+
+	// if (v->type == String) {
+	// 	sprintf(exp->arrayStr[0], "%s", v->arrayStr[0]);
+	// } else {
+	// 	exp->array[0] = v->array[0];
+	// }
+
+	return variables + i;
+}
+
+struct var* temporaryPointArr(char* id, struct var* node) {
+	int i = getVariableIndex(id);
+
+	if (i == -1) {
+		printf("Variable %s was not declared in this scope\n", id);
+		exit(0);
+	}
+
+	struct var *v = variables + i;
+
+	if (v->isArray == 0) {
+		printf(RED "Varialbe %s is not an array type.\n" RESET, v->id);
+		exit(0);
+	}
+
+	if (node->type == String) {
+		printf(RED "This array type cannot be accessed with a string expression.\n" RESET);
+		exit(0);
+	}
+
+	int n = (int)node->array[0];
+
+	if (n < 0) {
+		printf(RED "Array index should be more than 0 but it's %d.\n" RESET, n);
+		exit(0);
+	}
+
+	if (n >= v->arraySize) {
+		printf(RED "Array size exceded: %d, where maximum is %d.\n" RESET, n, v->arraySize);
+		exit(0);
+	}
+
 	struct var *exp = initializeVar();
 
 	exp->type = v->type;
 
 	if (v->type == String) {
-		sprintf(exp->valueStr, "%s", v->valueStr);
+		sprintf(exp->arrayStr[0], "%s", v->arrayStr[n]);
 	} else {
-		exp->value = v->value;
+		exp->array[0] = v->array[n];
 	}
 
 	return exp;
+
 }
 
 void freeVar(struct var* v) {
@@ -344,24 +390,63 @@ void updateValue(char* id, struct var* exp) {
 	} 
 
 	struct var *vr = variables + i;
+	
+	if (vr->isArray) {
+		printf(RED "Variable %s is an array type.\n" RESET, vr->id);
+		exit(0);
+	}
+	
 	if(vr->cnst)
 	{
 		printf("Constat variable %s cannot be modified\n", id);
-
 		exit(0);
 	} 
 
 	if (vr->type == String) {
-		sprintf(vr->valueStr, "%s", exp->valueStr);
+		sprintf(vr->arrayStr[0], "%s", exp->arrayStr[0]);
 	} else {
-		vr->value = exp->value;
+		vr->array[0] = exp->array[0];
 	}
 	if (vr->type == String) {
-		sprintf(vr->valueStr, "%s", exp->valueStr);
+		sprintf(vr->arrayStr[0], "%s", exp->arrayStr[0]);
 	} else {
-		vr->value = exp->value;
+		vr->array[0] = exp->array[0];
 	}
 
+}
+
+void updateArrValue(char* id, struct var* exp_1, struct var* exp_2) {
+	int i = getVariableIndex(id);
+
+	if (i == -1) {
+		printf("Variable %s was not declared in this scope\n", id);
+		exit(0);
+	}
+
+	struct var *v = variables + i;
+
+	if (exp_1->type == String) {
+		printf(RED "This array type cannot be accessed with a string expression.\n" RESET);
+		exit(0);
+	}
+
+	int n = (int)exp_1->array[0];
+
+	if (n < 0) {
+		printf(RED "Array index should be more than 0 but it's %d.\n" RESET, n);
+		exit(0);
+	}
+
+	if (n >= v->arraySize) {
+		printf(RED "Array size exceded: %d, where maximum is %d.\n" RESET, n, v->arraySize);
+		exit(0);
+	}
+
+	if (v->type == String) {
+		sprintf(v->arrayStr[n], "%s", exp_2->arrayStr[0]);
+	} else {
+		v->array[n] = exp_2->array[0];
+	}
 }
 
 void FloatingPointException(int val) {
@@ -385,9 +470,9 @@ void pushEmptyVariable(char* id, int type) {
 	v->type = type;
 
 	if (type == String) {
-		v->value = 0;
+		sprintf(v->arrayStr[0], "%s", "");
 	} else {
-		sprintf(v->valueStr, "%s", "");
+		v->array[0] = 0;
 	}
 
 	totalVar++;
@@ -407,14 +492,45 @@ void pushVariable(char* id, int type, struct var* exp) {
 	v->type = type;
 
 	if (type == String) {
-		sprintf(v->valueStr, "%s", exp->valueStr);
+		sprintf(v->arrayStr[0], "%s", exp->arrayStr[0]);
 	} else {
-		v->value = exp->value;
+		v->array[0] = exp->array[0];
 	}
 
 	freeVar(exp);
 	totalVar++;
 }
+
+void pushArray(char* id, int type, struct var* exp) {
+	int i = getVariableIndex(id);
+
+	if (i != -1) {
+		printf("The variable %s was already declared here\n", id);
+		exit(0);
+	}
+
+	if (exp->type == String) {
+		printf(RED "Array types cannot be declared with string expressions.\n" RESET);
+		exit(0);
+	}
+
+	int n = (int)exp->array[0];
+
+	if (n <= 0) {
+		printf(RED "The array size should be at least 1.\n" RESET);
+		exit(0);
+	}
+
+	struct var *v = variables + totalVar;
+
+	sprintf(v->id, "%s", id);
+	v->type = type;
+	v->isArray = 1;
+	v->arraySize = n;
+
+	totalVar++;
+}
+
 void pushVariableConst(char* id, int type, struct var* exp) {
 	int i = getVariableIndex(id);
 
@@ -429,9 +545,9 @@ void pushVariableConst(char* id, int type, struct var* exp) {
 	v->type = type;
 
 	if (type == String) {
-		sprintf(v->valueStr, "%s", exp->valueStr);
+		sprintf(v->arrayStr[0], "%s", exp->arrayStr[0]);
 	} else {
-		v->value = exp->value;
+		v->array[0] = exp->array[0];
 	}
     v->cnst=1;
 	freeVar(exp);
@@ -445,11 +561,11 @@ struct var* comp(struct var* a, struct var* b, int op_type) {
 	switch (op_type) {
 	case PLUS:
 		v->type = Double;
-		v->value = a->value + b->value;
+		v->array[0] = a->array[0] + b->array[0];
 		break;
 	case MINUS:
 		v->type = Double;
-		v->value = a->value - b->value;
+		v->array[0] = a->array[0] - b->array[0];
 		break;
 	case PROD:
 		if (a->type == Integer && b->type == Integer) {
@@ -458,39 +574,35 @@ struct var* comp(struct var* a, struct var* b, int op_type) {
 			v->type = Double;
 		}
 
-		v->value = a->value * b->value;
+		v->array[0] = a->array[0] * b->array[0];
 		break;
-	case DIV:;
-		double c = a->value / b->value;
-		if (c == (int)c) 
-			v->type = Integer;
-		else
-			v->type = Double;
-		if (b->value == 0) {
+	case DIV:
+		v->type = Double;
+		if (b->array[0] == 0) {
 			printf("Division with 0 is not possible\n");
 			exit(0);
 		}
-		v->value = a->value / b->value;
+		v->array[0] = a->array[0] / b->array[0];
 		break;
 	case LS:
 		v->type = Integer;
-		v->value = a->value < b->value;
+		v->array[0] = a->array[0] < b->array[0];
 		break;
 	case LEQ:
 		v->type = Integer;
-		v->value = a->value <= b->value;
+		v->array[0] = a->array[0] <= b->array[0];
 		break;
 	case GE:
 		v->type = Integer;
-		v->value = a->value > b->value;
+		v->array[0] = a->array[0] > b->array[0];
 		break;
 	case GEQ:
 		v->type = Integer;
-		v->value = a->value >= b->value;
+		v->array[0] = a->array[0] >= b->array[0];
 		break;
 	case EQEQ:
 		v->type = Integer;
-		v->value = a->value == b->value;
+		v->array[0] = a->array[0] == b->array[0];
 		break;
 	}
 
@@ -502,24 +614,33 @@ struct var* comp(struct var* a, struct var* b, int op_type) {
 
 void printValue(struct var* node) {
 	int type = node->type;
-	double value = node->value;
-	char* valueStr = node->valueStr;
+	int n;
 
 	switch (type) {
 	case Integer:
-		printf("%d\n", (int)node->value);
+		if (node->isArray == 1) {
+			n = node->arraySize;
+			printf("{");
+			for (int i = 0; i < n - 1; i++) {
+				printf("%d, ", (int)node->array[i]);
+			}
+			printf("%d", (int)node->array[n - 1]);
+			printf("}\n");
+			break;
+		}
+		printf("%d\n", (int)node->array[0]);
 		break;
 	case Character:
-		printf("%c\n", (char)node->value);
+		printf("%c\n", (char)node->array[0]);
 		break;
 	case Float:
-		printf("%f\n", (float)node->value);
+		printf("%f\n", (float)node->array[0]);
 		break;
 	case Double:
-		printf("%f\n", (double)node->value);
+		printf("%f\n", (double)node->array[0]);
 		break;
 	case String:
-		printf("%s\n", (char*)node->valueStr);
+		printf("%s\n", (char*)node->arrayStr[0]);
 		break;
 	default:
 		break;
@@ -532,9 +653,10 @@ struct var* initializeVar() {
 	struct var* v = (struct var*)malloc(sizeof(struct var));
 
 	sprintf(v->id, "%s", "");
-	sprintf(v->valueStr, "%s", "");
+	sprintf(v->arrayStr[0], "%s", "");
 
-	v->value = 0;
+	v->array[0] = 0;
+	v->isArray = 0;
 
 	return v;
 }
@@ -547,4 +669,4 @@ int main (void) {
 void yyerror (char *s) 
 {
 	printf (RED"Error: %s line %d\n"RESET, s,yylineno);
-} 
+}

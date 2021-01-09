@@ -1,9 +1,20 @@
 Integer a = 9 == 1 + 8;
 
-Const Integer b = 3;
+Integer hg[7];
+hg[4] = 7;
+hg[3] = 9;
 
-Eval(5/2.5);
+hg[2] = -1043;
 
+print hg;
+
+Const Integer b = 3 + 7 * 9 + 12 + 432;
+print b;
+
+String h = "sdaa";
+Char l = 'a';
+
+print h;
 
 if (7) {
 
@@ -15,7 +26,7 @@ if (7) {
 
 }
 
-Integer fun(Integer x,Float a) {
+Integer fun dsa() {
     return 9;
 }
 
