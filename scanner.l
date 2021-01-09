@@ -19,6 +19,7 @@ struct var {
 
 %}
 %%
+
 "print"				    {return print;}
 "exit"				    {return exit_command;}
 "Integer"               {yylval.type_id = Integer; return Integer;}
@@ -54,9 +55,11 @@ struct var {
 ['].[']                 {strcpy(yylval.string, yytext); return Character_Value;}
 [0]|[1-9][0-9]*         {yylval.num = atoi(yytext); return number;}
 [0]|[1-9][0-9]*\.[0-9]+        {yylval.num = atof(yytext); return number_r;}
-[ \t\n]                 ;
-[-+=*/{};\[\]]          {return yytext[0];}
+[ \t]                  ;
+[\n]                   {yylineno++;}
+[-+=*/{};,]            {return yytext[0];}
 .                       {ECHO; yyerror ("unexpected character"); printf("%s\n", yytext);}
+
 
 %%
 int yywrap (void) {return 1;}
