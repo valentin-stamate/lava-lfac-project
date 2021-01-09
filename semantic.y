@@ -193,15 +193,14 @@ smtm_type 	: assignment ';'			{;}
 
 
 
-FUNCTION 	: data_type FUN '(' lista_param ')' smtm_fun 		{;}
+FUNCTION 	: DATA_TYPE FUN '(' lista_param ')' smtm_fun 		{;}
 			;
 
 lista_param : paramentru	 
 			| lista_param ',' paramentru		
 			;
 
-paramentru  : data_type identifier
-
+paramentru  : DATA_TYPE IDENTIFIER
 			;
 
 smtm_fun	: '{' smtm_types RETURN exp ';' '}' 		{;}
