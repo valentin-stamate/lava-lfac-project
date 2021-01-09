@@ -1,15 +1,5 @@
-print Integer 2 + 4;
+Integer a[5];
 
-if (7) {
+Const Integer b = 7;
 
-} elif(8) {
-
-} elif(99) {
-
-}else {
-
-}
-
-Integer fun() {
-    return 9;
-}
+print (Integer) b;

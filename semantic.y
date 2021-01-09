@@ -11,38 +11,47 @@ extern FILE* yyin;
 extern int yylineno;
 int lineError = 0;
 
-#define MAX_VAR 100
+struct var {
+	int type;
 
-char symbols[MAX_VAR][20];
-double symbols_values[MAX_VAR];
+	char* identifier;
+	double value;
+	char* valueStr;
+
+	int cnst;
+};
+
 int totalVar = 0;
+struct var variables[100];
 
-char symbols_str[MAX_VAR][20];
-char symbols_values_str[100][1000];
-int totalVarStr = 0;
+struct var* temporaryPointNum(double, int);
+struct var* temporaryPointStr(void*, int);
+struct var* temporaryPointVar(char*);
 
-int symbolVal(char*);
-void updateSymbolVal(char*, double);
+void freeVar(struct var* v);
+int getVariableIndex(char*);
+void updateValue(char*, struct var*);
 void FloatingPointException(int);
-void push(char*, double);
-void printValue(int, double);
-void pushStr(char*, char*);
-int computeSymbolIndexStr(char*);
-void printValueStr(char*);
-char* symbolValStr(char*);
+void pushVariable(char*, int, struct var*);
+void pushEmptyVariable(char*, int)
+struct var* comp(struct var*, struct var*, char*);
+void printValue(struct var*);
+
 %}
 
-%union {double num; char id[20]; int type_id; char string[1000]; char ch;}         /* Yacc definitions */
+%union {
+	double num; 
+	char id[20]; 
+	int type_id; 
+	char string[1000]; 
+	struct var* strct;
+}         /* Yacc definitions */
 %start lines
 %token print
 
-%type <type_id> data_type
-%token <type_id> Integer
-%token <type_id> Float
-%token <type_id> Double
-%token <type_id> Character 
-%token <type_id> Bool
-%token <type_id> String
+%type <type_id> DATA_TYPE
+%token <type_id> Integer Float Double Character Bool String
+%token Const
 
 %token GEQ
 %token LEQ
@@ -51,7 +60,6 @@ char* symbolValStr(char*);
 %token EQ
 
 %type<num> stat
-
 %token IF
 %type<num> smtm smtm_type smtm_types smtm_fun ELSE_ ELIF_ ELIF_S
 %token ELSE
@@ -60,15 +68,16 @@ char* symbolValStr(char*);
 %token FUN RETURN
 %type<num> FUNCTION
 
-%token <num> Character_Value
-%token <string> String_Value
+%token <string> String_Value Character_Value
 
 %token exit_command
 %token <num> number
 %token <id> identifier
-%type <num> line lines exp term 
-%type <string> str_exp str_term
-%type <id> assignment
+%type <num> line lines
+
+%type <strct> exp term 
+
+%type <num> assignment
 
 %nonassoc IF ELSE ELIF
 
@@ -96,52 +105,52 @@ lines   : line			 			{;}
 
 line 	: assignment ';'				{;}
 		| exit_command ';'				{exit(EXIT_SUCCESS);}
-		| print data_type exp ';'		{printValue($2, $3);}
-		| print String str_exp ';'		{printValueStr($3);}
+		| print exp ';'					{printValue($2);}
 		| stat 							{;}
 		| FUNCTION 				   		{;}
 		;
 
 
-data_type   : Integer   	 {$$ = $1;}
+DATA_TYPE   : Integer   	 {$$ = $1;}
 			| Float			 {$$ = $1;}
 			| Double		 {$$ = $1;}
 			| Character 	 {$$ = $1;}
 			| Bool 	 		 {$$ = $1;}
+			| String		 {$$ = $1;}
 			;
 
-assignment  : identifier '=' exp  { updateSymbolVal($1,$3); }
-			| data_type identifier '=' exp { push($2, $4); }
-			| String identifier '=' String_Value {pushStr($2, $4);}
-			;
-exp    	: term                     {$$ = $1;}
-     	| '(' exp ')'			   {$$ = $2;}
-       	| exp '+' exp              {$$ = $1 + $3;}
-       	| exp '-' exp              {$$ = $1 - $3;}
-       	| exp '*' exp              {$$ = $1 * $3;}
-        | exp '/' exp          	   {FloatingPointException($3);$$ = $1 / $3;}
-		| Character_Value		   {$$ = $1;}
+assignment  : DATA_TYPE identifier	 					{pushEmptyVariable($2, $1);}
+			| DATA_TYPE identifier '=' exp  			{pushVariable($2, $4, $1);}
+		
+			| Const DATA_TYPE identifier '=' exp  		{pushVariable($3, $5, $2);} // TODO const
 
-		| exp AND exp              {$$ = $1 && $3;}
-		| exp OR exp               {$$ = $1 || $3;}
-		| exp '<' exp 				{$$ = $1 < $3;}
-		| exp '>' exp 				{$$ = $1 > $3;}
-		| exp LEQ exp 				{$$ = $1 <= $3;}
-		| exp GEQ exp 				{$$ = $1 >= $3;}
-		| exp EQ exp 				{$$ = $1 == $3;}
+			| DATA_TYPE identifier '[' exp ']'			{pushEmptyVariable($2, $1);} // TODO exp
+
+			| identifier '=' exp   						{updateValue($1, $3);}
+			;
+
+
+exp    	: term                     	{$$ = $1;}
+     	| '(' exp ')'			   	{$$ = $2;}
+       	| exp '+' exp              	{$$ = comp($1, $3, "+");} // todo if it's identifier
+       	| exp '-' exp              	{$$ = comp($1, $3, "-");}
+       	| exp '*' exp              	{$$ = comp($1, $3, "*");}
+        | exp '/' exp          	   	{$$ = comp($1, $3, "/");} // TODO 0 division
+
+		| exp AND exp              	{$$ = comp($1, $3, "&&");}
+		| exp OR exp               	{$$ = comp($1, $3, "||");}
+		| exp '<' exp 				{$$ = comp($1, $3, "<") ;}
+		| exp '>' exp 				{$$ = comp($1, $3, ">");}
+		| exp LEQ exp 				{$$ = comp($1, $3, "<=");}
+		| exp GEQ exp 				{$$ = comp($1, $3, ">=");}
+		| exp EQ exp 				{$$ = comp($1, $3, "==");}
 		;
 
 
-
-str_exp : str_term			{strcpy($$, $1);}
-		;
-
-str_term : String_Value 			{strcpy($$, $1);}
-		 | identifier				{strcpy($$, symbolValStr($1));}
-		 ;
-
-term   	: number                {$$ = $1;}
-		| identifier			{$$ = symbolVal($1);} 
+term	: identifier			{$$ = temporaryPointVar($1);} 
+   		| number                {$$ = temporaryPointNum($1, Double);}
+		| Character_Value		{$$ = temporaryPointStr($1, Character);}
+		| String_Value			{$$ = temporaryPointStr($1, String);}
         ;
 
 stat	: IF '(' exp ')' smtm				{;}
@@ -161,7 +170,7 @@ ELIF_   : ELIF '(' exp ')' smtm				{;}
 		;
 
 smtm 	: '{' smtm_types '}'				{;}
-		| '{' '}'						{;}
+		| '{' '}'							{;}
 		;
 
 smtm_types  : smtm_type 					{;}
@@ -170,12 +179,12 @@ smtm_types  : smtm_type 					{;}
 
 smtm_type 	: assignment ';'			{;}
 			| exp        ';'			{;}
-			| print data_type exp ';'	{printValue($2, $3);}
+			| print exp ';'				{printValue($2);}
 			| stat 						{;}
 			;
 
 
-FUNCTION 	: data_type FUN '(' ')' smtm_fun 		{;}
+FUNCTION 	: DATA_TYPE FUN '(' ')' smtm_fun 		{;}
 			;
 
 smtm_fun	: '{' smtm_types RETURN exp ';' '}' 		{;}
@@ -184,120 +193,152 @@ smtm_fun	: '{' smtm_types RETURN exp ';' '}' 		{;}
 
 %%
 
-int computeSymbolIndex(char* varName) {
+
+struct var* temporaryPointNum(double val, int type) {
+	struct var *v = (struct var*) malloc(sizeof(var));
+
+	v->value = val;
+	v->type = type;
+
+	return v;
+}
+
+struct var* temporaryPointStr(void* val, int type) {
+	struct var *v = (struct var*) malloc(sizeof(var));
+
+	v->type = type;
+
+	if (type == String) {
+		v->valueStr = (char*)val;
+	} else {
+		v->value = ((char*)val)[0];
+	}
+
+	return v;
+}
+
+struct var* temporaryPointVar(char* identifier) {
+	int i = getVariableIndex(identifier);
+
+	if (i == -1) {
+		printf("Variable %s was not declared in this scope\n", identifier);
+		exit(0);
+	}
+
+	struct var *v = &variables[i];
+	struct var *exp = (struct var*)malloc(sizeof(struct var));
+
+	exp->type = v->type;
+
+	if (v->type == String) {
+		exp->valueStr = v->valueStr;
+	} else {
+		exp->value = v->value;
+	}
+
+	return exp;
+}
+
+void freeVar(struct var* v) {
+	free(v);
+}
+
+int getVariableIndex(char* varName) {
 	for (int i = 0; i < totalVar; i++) {
-		if (strcmp(varName, symbols[i]) == 0) {
+		if (strcmp(varName, variables[i].identifier) == 0) {
 			return i;
 		}
 	}
-	
+
 	return -1;
 } 
 
-
-
-int symbolVal(char* symbol) {
-	int i = computeSymbolIndex(symbol);
-	return symbols_values[i];
-}
-
-char* symbolValStr(char* symbol) {
-	int i = computeSymbolIndexStr(symbol);
-	return symbols_values_str[i];
-}
-
-void updateSymbolVal(char* symbol, double val) {
-	int i = computeSymbolIndex(symbol);
+void updateValue(char* identifier, struct var* exp) {
+	int i = getVariableIndex(identifier);
 
 	if (i == -1) {
-		printf("Variable %s was not declared in this scope %d\n", symbol, print);
+		printf("Variable %s was not declared in this scope\n", symbol);
 		exit(0);
 	} 
 
-	symbols_values[i] = val;
+	struct var *vr = variables + i;
+
+	if (vr->type == String) {
+		vr->valueStr = v->valueStr;
+	} else {
+		vr->value = v->value;
+	}
+
 }
 
-void FloatingPointException(int val)
-{
-	if(!val)
-    	{
-			printf("Nu se poate imparti la 0\n");
-		    exit(0);
-		}
+void FloatingPointException(int val) {
+	if(!val) {
+		printf("Nu se poate imparti la 0\n");
+		exit(0);
+	}
 }
 
-void push(char* symbol, double val) {
-	int i = computeSymbolIndex(symbol);
+void pushEmptyVariable(char* identifier, int type) {
+	int i = getVariableIndex(identifier);
 
 	if (i != -1) {
 		printf("The variable %s was already declared here\n", symbol);
 		exit(0);
 	}
 
-	sprintf(symbols[totalVar], "%s", symbol);
-	symbols_values[totalVar] = val;
-	totalVar++;
-
-}
-
-int computeSymbolIndexStr(char* varName) {
-	for (int i = 0; i < totalVarStr; i++) {
-		if (strcmp(varName, symbols_str[i]) == 0) {
-			return i;
-		}
-	}
+	struct var *v = variables[totalVar];
 	
-	return -1;
+	v->identifier = identifier;
+	v->type = type;
+
+	if (type == String) {
+		v->value = 0;
+	} else {
+		char *str = malloc(1);
+		sprintf(str, "%s", "");
+		v->valueStr = exp->str;
+	}
+
+	totalVar++;
 }
 
-void pushStr(char* symbol, char* val) {
-	int i = computeSymbolIndexStr(symbol);
+void pushVariable(char* identifier, int type, struct var* exp) {
+	int i = getVariableIndex(identifier);
 
 	if (i != -1) {
 		printf("The variable %s was already declared here\n", symbol);
 		exit(0);
 	}
 
-	sprintf(symbols_str[totalVarStr], "%s", symbol);
-	sprintf(symbols_values_str[totalVarStr], "%s", val);
+	var *v = variables[totalVar];
+	
+	v->identifier = identifier;
+	v->type = type;
 
-	totalVarStr++;
-}
-
-void printValue(int type_id, double value) {
-	switch (type_id) {
-		case Integer:
-			printf("%d\n", (int)value); 
-			break;
-		case Float:
-			printf("%f\n", (float)value);
-			break;
-		case Double:
-			printf("%f", (double)value);
-			break;
-		case Bool:
-			printf("%d\n", value != 0);
-		case Character: 
-			printf("%c\n", (char)value);
-			break;
-		default:
-			break;
+	if (type == String) {
+		v->value = exp->value;
+	} else {
+		v->valueStr = exp->valueStr;
 	}
+
+	freeVar(exp);
+	totalVar++;
 }
 
-void printValueStr(char* value) {
-	printf("%s\n", value);
+struct var* comp(struct var* a, struct var* b, char* type) {
+	// TODO
+}
+
+
+void printValue(struct var* exp) {
+
+
+
+	// 
 }
 
 int main (void) {
-
-	for (int i = 0; i < MAX_VAR; i++) {
-		strcpy(symbols[i], "");
-		symbols_values[i] = 0;
-	}
-
     yyin = fopen("input", "r");
-
 	return yyparse();
 }
 
