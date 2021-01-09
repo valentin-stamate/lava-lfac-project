@@ -1,3 +1,15 @@
-abfd = 6 / 1;
+print Integer 2 + 4;
 
-print abfd;
+if (7) {
+
+} elif(8) {
+
+} elif(99) {
+
+}else {
+
+}
+
+Integer fun() {
+    return 9
+}
