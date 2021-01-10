@@ -407,6 +407,8 @@ struct var* temporaryPointArr(char* id, struct var* node) {
 
 	if (v->type == String) {
 		sprintf(exp->arrayStr[0], "%s", v->arrayStr[n]);
+	} else if (v->type == Bool) {
+		exp->array[0] = v->array[n] != 0;
 	} else {
 		exp->array[0] = v->array[n];
 	}
@@ -470,6 +472,8 @@ void updateValue(char* id, struct var* exp) {
 		for (int i = 0; i < n && i < m; i++) {
 			if (vr->type == String) {
 				sprintf(vr->arrayStr[i], "%s", exp->arrayStr[i]);
+			} else if (vr->type == Bool) {
+				vr->array[i] = exp->array[i] != 0;
 			} else {
 				vr->array[i] = exp->array[i];
 			}
@@ -480,6 +484,8 @@ void updateValue(char* id, struct var* exp) {
 
 	if (vr->type == String) {
 		sprintf(vr->arrayStr[0], "%s", exp->arrayStr[0]);
+	} else if (vr->type == Bool) {
+		vr->array[0] = exp->array[0] != 0;
 	} else {
 		vr->array[0] = exp->array[0];
 	}
@@ -520,6 +526,8 @@ void updateArrValue(char* id, struct var* exp_1, struct var* exp_2) {
 
 	if (v->type == String) {
 		sprintf(v->arrayStr[n], "%s", exp_2->arrayStr[0]);
+	} else if (v->type == Bool) {
+		v->array[n] = exp_2->array[0] != 0;
 	} else {
 		v->array[n] = exp_2->array[0];
 	}
@@ -562,6 +570,8 @@ void pushVariable(char* id, int type, struct var* exp) {
 
 	if (type == String) {
 		sprintf(v->arrayStr[0], "%s", exp->arrayStr[0]);
+	} else if (type == Bool) {
+		v->array[0] = exp->array[0] != 0;
 	} else {
 		v->array[0] = exp->array[0];
 	}
@@ -620,6 +630,8 @@ void pushVariableConst(char* id, int type, struct var* exp) {
 
 	if (type == String) {
 		sprintf(v->arrayStr[0], "%s", exp->arrayStr[0]);
+	} else if (type == Bool) {
+		v->array[0] = exp->array[0] != 0;
 	} else {
 		v->array[0] = exp->array[0];
 	}
@@ -631,24 +643,41 @@ void pushVariableConst(char* id, int type, struct var* exp) {
 struct var* comp(struct var* a, struct var* b, int op_type) {
 	
 	struct var* v = initializeVar();
+	double c;
 
 	switch (op_type) {
-	case PLUS:
-		v->type = Float;
-		v->array[0] = a->array[0] + b->array[0];
-		break;
-	case MINUS:
-		v->type = Float;
-		v->array[0] = a->array[0] - b->array[0];
-		break;
-	case PROD:
-		if (a->type == Integer && b->type == Integer) {
+	case PLUS:;
+		c = a->array[0] + b->array[0];
+
+		if (c == (int)c) {
 			v->type = Integer;
+			v->array[0] = (int)c;
 		} else {
 			v->type = Float;
+			v->array[0] = c;
 		}
+		break;
+	case MINUS:;
+		c = a->array[0] - b->array[0];
 
-		v->array[0] = a->array[0] * b->array[0];
+		if (c == (int)c) {
+			v->type = Integer;
+			v->array[0] = (int)c;
+		} else {
+			v->type = Float;
+			v->array[0] = c;
+		}
+		break;
+	case PROD:;
+		c = a->array[0] * b->array[0];
+
+		if (c == (int)c) {
+			v->type = Integer;
+			v->array[0] = (int)c;
+		} else {
+			v->type = Float;
+			v->array[0] = c;
+		}
 		break;
 	case DIV:;
 	    double c = a->array[0] / b->array[0];
@@ -660,27 +689,36 @@ struct var* comp(struct var* a, struct var* b, int op_type) {
 			printf("Division with 0 is not possible\n");
 			exit(0);
 		}
-		v->array[0] = a->array[0] / b->array[0];
+
+	    c = a->array[0] / b->array[0];
+
+		if (c == (int)c) { 
+			v->type = Integer;
+			v->array[0] = (int)c;
+		} else {
+			v->type = Float;
+			v->array[0] = c;
+		}
 		break;
-	case LS:
+	case LS:;
 		v->type = Integer;
-		v->array[0] = a->array[0] < b->array[0];
+		v->array[0] = (int)(a->array[0] < b->array[0]);
 		break;
-	case LEQ:
+	case LEQ:;
 		v->type = Integer;
-		v->array[0] = a->array[0] <= b->array[0];
+		v->array[0] = (int)(a->array[0] <= b->array[0]);
 		break;
-	case GE:
+	case GE:;
 		v->type = Integer;
-		v->array[0] = a->array[0] > b->array[0];
+		v->array[0] = (int)(a->array[0] > b->array[0]);
 		break;
-	case GEQ:
+	case GEQ:;
 		v->type = Integer;
-		v->array[0] = a->array[0] >= b->array[0];
+		v->array[0] = (int)(a->array[0] >= b->array[0]);
 		break;
-	case EQEQ:
+	case EQEQ:;
 		v->type = Integer;
-		v->array[0] = a->array[0] == b->array[0];
+		v->array[0] = (int)(a->array[0] == b->array[0]);
 		break;
 	}
 
@@ -746,6 +784,19 @@ void printValue(struct var* node) {
 			break;
 		}
 		printf("%s\n", (char*)node->arrayStr[0]);
+		break;
+	case Bool:
+		if (node->isArray == 1) {
+			n = node->arraySize;
+			printf("{");
+			for (int i = 0; i < n - 1; i++) {
+				printf("\"%d\", ", (int)node->array[i]);
+			}
+			printf("\"%d\"", (int)node->array[n - 1]);
+			printf("}\n");
+			break;
+		}
+		printf("%d\n", (int)node->array[0]);
 		break;
 	default:
 		break;

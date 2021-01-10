@@ -5,7 +5,7 @@ a = d;
 print a;
 print d;
 
-Float arr[8];
+Bool arr[8];
 arr[0] = 342.2342;
 arr[1] = 6493;
 arr[2] = 934.3249023;
@@ -19,6 +19,8 @@ Float arr5453_543[4];
 arr5453_543[3] = 2;
 
 print arr5453_543;
+print arr[0] + arr[1];
+
 
 Const Integer b = 3 + 7 * 9 + 12 + 432;
 print b;
