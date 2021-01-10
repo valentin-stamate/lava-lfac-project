@@ -957,9 +957,9 @@ void printValue(struct var* node) {
 			n = node->arraySize;
 			printf("{");
 			for (int i = 0; i < n - 1; i++) {
-				printf("%c, ", (char)node->array[i]);
+				printf("'%c', ", (char)node->array[i]);
 			}
-			printf("%c", (char)node->array[n - 1]);
+			printf("'%c'", (char)node->array[n - 1]);
 			printf("}\n");
 			break;
 		}
