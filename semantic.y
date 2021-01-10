@@ -27,6 +27,7 @@ struct var {
 struct var* initializeVar();
 
 #define RED "\e[1;31m"
+#define GREEN "\e[1;32m"
 #define RESET "\e[0m"
 
 int totalVar = 0;
@@ -50,6 +51,7 @@ void print_simbol_table(struct var*,int);
 
 void pushArray(char*, int, struct var*);
 void updateArrValue(char*, struct var*, struct var*);
+void Eval_function(struct var*);
 %}
 
 %union {
@@ -73,8 +75,8 @@ void updateArrValue(char*, struct var*, struct var*);
 %token PLUS MINUS PROD DIV EQUAL
 
 %type<num> stat
-%token IF
-%type<num> smtm smtm_type smtm_types smtm_fun ELSE_ ELIF_ ELIF_S
+%token IF WHILE FOR
+%type<num> smtm smtm_type smtm_types smtm_fun ELSE_ ELIF_ ELIF_S 
 %token ELSE
 %token ELIF
 
@@ -128,6 +130,7 @@ line 	: assignment ';'				{;}
 		| print exp ';'					{printValue($2);}
 		| stat 							{;}
 		| FUNCTION 				   		{;}
+		| EVAL '(' exp ')' ';'          {Eval_function($3);}
 		;
 
 
@@ -179,6 +182,8 @@ stat	: IF '(' exp ')' smtm				{;}
 		| IF '(' exp ')' smtm ELIF_S ELSE_ 	{;}
 		| IF '(' exp ')' smtm ELSE_ 		{;}
 		| IF '(' exp ')' smtm ELIF_S	 	{;}
+		| WHILE '(' exp ')' smtm			{;}
+		| FOR '(' ';' exp ';' IDENTIFIER EQUAL exp ')' smtm					{;}
 		;
 
 ELSE_   : ELSE smtm 						{;}
@@ -229,6 +234,18 @@ smtm_fun	: '{' smtm_types RETURN exp ';' '}' 		{;}
 %%
 
 
+void Eval_function(struct var* x)
+{
+  if(x->type == Integer)
+  		printf(GREEN "%d\n" RESET,(int)x->array[0]);
+  else
+  {
+	  	printf("Eval function must have an integer type parameter\n");
+		exit(0);
+  }
+   
+}
+
 void print_simbol_table(struct var* v,int n)
 {
 	FILE *fd;
@@ -258,6 +275,9 @@ void print_simbol_table(struct var* v,int n)
 				break;
 			case String:
 				fprintf(fd, "tip = String valoare = \"%s\" ", (char*)v[i].arrayStr[0]);
+				break;
+			case Bool:
+				fprintf(fd, "tip = Bool valoare = %d ", (int)v[i].array[0]);
 				break;
 			default:
 				break;
@@ -296,6 +316,13 @@ void print_simbol_table(struct var* v,int n)
 				for(int j=0;j<v[i].arraySize;j++)
 				{
 					fprintf(fd," %s[%d] = \"%s\" ", v[i].id, j, (char*)v[i].arrayStr[j]);
+				}
+				break;
+			case Bool:
+				fprintf(fd, "tip = Bool Array ");
+				for(int j=0;j<v[i].arraySize;j++)
+				{
+				 	fprintf(fd,"%s[%d] = %d  ", v[i].id, j, (int)v[i].array[j]);
 				}
 				break;
 			default:
@@ -457,30 +484,6 @@ void updateValue(char* id, struct var* exp) {
 		vr->array[0] = exp->array[0];
 	}
 
-	struct var *v = variables + i;
-
-	if (exp_1->type == String) {
-		printf(RED "This array type cannot be accessed with a string expression.\n" RESET);
-		exit(0);
-	}
-
-	int n = (int)exp_1->array[0];
-
-	if (n < 0) {
-		printf(RED "Array index should be more than 0 but it's %d.\n" RESET, n);
-		exit(0);
-	}
-
-	if (n >= v->arraySize) {
-		printf(RED "Array size exceded: %d, where maximum is %d.\n" RESET, n, v->arraySize);
-		exit(0);
-	}
-
-	if (v->type == String) {
-		sprintf(v->arrayStr[n], "%s", exp_2->arrayStr[0]);
-	} else {
-		v->array[n] = exp_2->array[0];
-	}
 }
 
 void updateArrValue(char* id, struct var* exp_1, struct var* exp_2) {
@@ -593,7 +596,7 @@ void pushArray(char* id, int type, struct var* exp) {
 		printf(RED "Data types should match.\n" RESET);
 		exit(0);
 	}
-  
+
 	sprintf(v->id, "%s", id);
 	v->type = type;
 	v->isArray = 1;
@@ -647,8 +650,12 @@ struct var* comp(struct var* a, struct var* b, int op_type) {
 
 		v->array[0] = a->array[0] * b->array[0];
 		break;
-	case DIV:
-		v->type = Float;
+	case DIV:;
+	    double c = a->array[0] / b->array[0];
+		if (c == (int)c) 
+			v->type = Integer;
+		else
+			v->type = Float;
 		if (b->array[0] == 0) {
 			printf("Division with 0 is not possible\n");
 			exit(0);
