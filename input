@@ -1,9 +1,29 @@
 Integer a = 9 == 1 + 8;
+Float d = 6.456;
+a = d;
 
-Const Integer b = 3;
+print a;
+print d;
 
-Eval(5/2.5);
+Float arr[8];
+arr[0] = 342.2342;
+arr[1] = 6493;
+arr[2] = 934.3249023;
+arr[3] = 2.54324;
+arr[7] = 8.5;
 
+Float arr5453_543[4];
+arr5453_543[6] = "dasd";
+
+print arr5453_543;
+
+Const Integer b = 3 + 7 * 9 + 12 + 432;
+print b;
+
+String h = "sdaa";
+Char l = 'a';
+
+print h;
 
 if (7) {
 
@@ -15,7 +35,7 @@ if (7) {
 
 }
 
-Integer fun(Integer x,Float a) {
+Integer fun dsa() {
     return 9;
 }
 
