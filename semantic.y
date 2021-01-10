@@ -742,6 +742,15 @@ struct var* comp(struct var* a, struct var* b, int op_type) {
 
 	switch (op_type) {
 	case PLUS:;
+		if (a->type == String && b->type == String) {
+			v->type = String;
+			strcpy(v->arrayStr[0], "");
+			printf("-- %s + %s--\n", a->arrayStr[0], b->arrayStr[0]);
+			strcat(v->arrayStr[0], a->arrayStr[0]);
+			strcat(v->arrayStr[0], b->arrayStr[0]);
+			break;
+		}
+
 		c = a->array[0] + b->array[0];
 
 		if (c == (int)c) {
@@ -882,7 +891,7 @@ void printValue(struct var* node) {
 			break;
 		}
 		if (node->var_type == TYPE_NORMAL)
-			printf("%s\n", (char*)node->arrayStr[0]);
+			printf("\"%s\"\n", node->arrayStr[0]);
 		break;
 	case Bool:
 		if (node->var_type == TYPE_ARRAY) {
@@ -926,6 +935,7 @@ struct var* initializeVar() {
 
 	v->array[0] = 0;
 	v->var_type = TYPE_NORMAL;
+	v->type = 0;
 
 	return v;
 }
