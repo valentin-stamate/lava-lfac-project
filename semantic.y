@@ -27,6 +27,7 @@ struct var {
 struct var* initializeVar();
 
 #define RED "\e[1;31m"
+#define GREEN "\e[1;32m"
 #define RESET "\e[0m"
 
 int totalVar = 0;
@@ -50,6 +51,7 @@ void print_simbol_table(struct var*,int);
 
 void pushArray(char*, int, struct var*);
 void updateArrValue(char*, struct var*, struct var*);
+void Eval_function(struct var*);
 %}
 
 %union {
@@ -66,7 +68,7 @@ void updateArrValue(char*, struct var*, struct var*);
 %token print
 
 %type <type_id> DATA_TYPE
-%token <type_id> Integer Float Double Character Bool String
+%token <type_id> Integer Float Character Bool String
 %token Const
 
 %token GEQ LEQ AND OR EQEQ LS GE
@@ -100,7 +102,6 @@ void updateArrValue(char*, struct var*, struct var*);
 
 %right EQUAL
 
-
 %left EQEQ
 %left GEQ LEQ LS GE
 
@@ -128,12 +129,12 @@ line 	: assignment ';'				{;}
 		| print exp ';'					{printValue($2);}
 		| stat 							{;}
 		| FUNCTION 				   		{;}
+		| EVAL '(' exp ')' ';'          {Eval_function($3);}
 		;
 
 
 DATA_TYPE   : Integer   	 {$$ = $1;}
 			| Float			 {$$ = $1;}
-			| Double		 {$$ = $1;}
 			| Character 	 {$$ = $1;}
 			| Bool 	 		 {$$ = $1;}
 			| String		 {$$ = $1;}
@@ -171,7 +172,7 @@ exp    	: term                     	{$$ = $1;}
 term	: IDENTIFIER			{$$ = temporaryPointVar($1);} 
 		| IDENTIFIER '[' exp ']'{$$ = temporaryPointArr($1, $3);}
    		| number                {$$ = temporaryPointNum($1, Integer);}
-		| number_r				{$$ = temporaryPointNum($1, Double);}
+		| number_r				{$$ = temporaryPointNum($1, Float);}
 		| Character_Value		{$$ = temporaryPointStr($1, Character);}
 		| String_Value			{$$ = temporaryPointStr($1, String);}
         ;
@@ -230,6 +231,18 @@ smtm_fun	: '{' smtm_types RETURN exp ';' '}' 		{;}
 %%
 
 
+void Eval_function(struct var* x)
+{
+  if(x->type == Integer)
+  		printf(GREEN "%d\n" RESET,(int)x->array[0]);
+  else
+  {
+	  	printf("Eval function must have an integer type parameter\n");
+		exit(0);
+  }
+   
+}
+
 void print_simbol_table(struct var* v,int n)
 {
 	FILE *fd;
@@ -245,29 +258,65 @@ void print_simbol_table(struct var* v,int n)
  	for(int i=0;i<n;i++)
 	{
 		fprintf(fd,"nume : %s  ",v[i].id);
-		switch (v[i].type) {
-		case Integer:
-			fprintf(fd, "valoare = %d  ", (int)v[i].array[0]);
-			break;
-		case Character:
-			fprintf(fd, "valoare = '%c' ", (char)v[i].array[0]);
-			break;
-		case Float:
-			fprintf(fd, "valoare = %f ", (float)v[i].array[0]);
-			break;
-		case Double:
-			fprintf(fd, "valoare = %f ", (double)v[i].array[0]);
-			break;
-		case String:
-			fprintf(fd, "valoare = \"%s\" ", (char*)v[i].arrayStr[0]);
-			break;
-		default:
-			break;
+		if(!v[i].isArray)
+		{
+			switch (v[i].type) {
+			case Integer:
+				fprintf(fd, "tip = Integer valoare = %d  ", (int)v[i].array[0]);
+				break;
+			case Character:
+				fprintf(fd, "tip = Character valoare = '%c' ", (char)v[i].array[0]);
+				break;
+			case Float:
+				fprintf(fd, "tip = Float valoare = %f ", (float)v[i].array[0]);
+				break;
+			case String:
+				fprintf(fd, "tip = String valoare = \"%s\" ", (char*)v[i].arrayStr[0]);
+				break;
+			default:
+				break;
+			}
+			if(v[i].cnst)
+				fprintf(fd, "constant \n");
+			else
+				fprintf(fd, "not constant \n");
 		}
-		if(v[i].cnst)
-			fprintf(fd, "constant \n");
 		else
-			fprintf(fd, "not constant \n");
+		{
+			switch (v[i].type) {
+			case Integer:
+				fprintf(fd, "tip = Integer Array ");
+				for(int j=0;j<v[i].arraySize;j++)
+				{
+				 	fprintf(fd,"%s[%d] = %d  ", v[i].id, j, (int)v[i].array[j]);
+				}
+				break;
+			case Character:
+				fprintf(fd, "tip = Chraracter Array ");
+				for(int j=0;j<v[i].arraySize;j++)
+				{
+				 	fprintf(fd,"%s[%d] = %c  ", v[i].id, j, (char)v[i].array[j]);
+				}
+				break;
+			case Float:
+				fprintf(fd, "tip = Float Array ");
+				for(int j=0;j<v[i].arraySize;j++)
+				{
+				 	fprintf(fd,"%s[%d] = %f  ", v[i].id, j, (float)v[i].array[j]);
+				}
+				break;
+			case String:
+				fprintf(fd, "tip = String Array");
+				for(int j=0;j<v[i].arraySize;j++)
+				{
+					fprintf(fd," %s[%d] = \"%s\" ", v[i].id, j, (char*)v[i].arrayStr[j]);
+				}
+				break;
+			default:
+				break;
+			}
+			fprintf(fd,"\n");
+		}
 
 	}
 
@@ -304,18 +353,6 @@ struct var* temporaryPointVar(char* id) {
 		exit(0);
 	}
 
-
-	// struct var *v = &variables[i];
-	// struct var *exp = initializeVar();
-
-	// exp->type = v->type;
-
-	// if (v->type == String) {
-	// 	sprintf(exp->arrayStr[0], "%s", v->arrayStr[0]);
-	// } else {
-	// 	exp->array[0] = v->array[0];
-	// }
-
 	return variables + i;
 }
 
@@ -347,7 +384,7 @@ struct var* temporaryPointArr(char* id, struct var* node) {
 	}
 
 	if (n >= v->arraySize) {
-		printf(RED "Array size exceded: %d, where maximum is %d.\n" RESET, n, v->arraySize);
+		printf(RED "Array size exceded for variable %s from expression: %d, where maximum index is %d.\n" RESET, id, n, v->arraySize - 1);
 		exit(0);
 	}
 
@@ -357,6 +394,8 @@ struct var* temporaryPointArr(char* id, struct var* node) {
 
 	if (v->type == String) {
 		sprintf(exp->arrayStr[0], "%s", v->arrayStr[n]);
+	} else if (v->type == Bool) {
+		exp->array[0] = v->array[n] != 0;
 	} else {
 		exp->array[0] = v->array[n];
 	}
@@ -391,8 +430,18 @@ void updateValue(char* id, struct var* exp) {
 
 	struct var *vr = variables + i;
 	
-	if (vr->isArray) {
-		printf(RED "Variable %s is an array type.\n" RESET, vr->id);
+	if (vr->isArray && !exp->isArray) {
+		printf(RED "Variable %s is an array type but the expression is not.\n" RESET, vr->id);
+		exit(0);
+	}
+
+	if (!vr->isArray && exp->isArray) {
+		printf(RED "Variable %s is a normal type but expression is an array.\n" RESET, vr->id);
+		exit(0);
+	}
+	
+	if (vr->type == String && exp->type != String || vr->type != String && exp->type == String) {
+		printf(RED "Data types should match.\n" RESET);
 		exit(0);
 	}
 	
@@ -402,13 +451,28 @@ void updateValue(char* id, struct var* exp) {
 		exit(0);
 	} 
 
-	if (vr->type == String) {
-		sprintf(vr->arrayStr[0], "%s", exp->arrayStr[0]);
-	} else {
-		vr->array[0] = exp->array[0];
+	if (vr->isArray && exp->isArray) {
+
+		int n = vr->arraySize;
+		int m = exp->arraySize;
+
+		for (int i = 0; i < n && i < m; i++) {
+			if (vr->type == String) {
+				sprintf(vr->arrayStr[i], "%s", exp->arrayStr[i]);
+			} else if (vr->type == Bool) {
+				vr->array[i] = exp->array[i] != 0;
+			} else {
+				vr->array[i] = exp->array[i];
+			}
+		}
+
+		return;
 	}
+
 	if (vr->type == String) {
 		sprintf(vr->arrayStr[0], "%s", exp->arrayStr[0]);
+	} else if (vr->type == Bool) {
+		vr->array[0] = exp->array[0] != 0;
 	} else {
 		vr->array[0] = exp->array[0];
 	}
@@ -438,21 +502,21 @@ void updateArrValue(char* id, struct var* exp_1, struct var* exp_2) {
 	}
 
 	if (n >= v->arraySize) {
-		printf(RED "Array size exceded: %d, where maximum is %d.\n" RESET, n, v->arraySize);
+		printf(RED "Array size exceded for %s: %d, where maximum index is %d.\n" RESET, id, n, v->arraySize - 1);
+		exit(0);
+	}
+
+	if (v->type == String && exp_2->type != String || v->type != String && exp_2->type == String) {
+		printf(RED "Data type should match for variable %s[%d].\n" RESET, id, n);
 		exit(0);
 	}
 
 	if (v->type == String) {
 		sprintf(v->arrayStr[n], "%s", exp_2->arrayStr[0]);
+	} else if (v->type == Bool) {
+		v->array[n] = exp_2->array[0] != 0;
 	} else {
 		v->array[n] = exp_2->array[0];
-	}
-}
-
-void FloatingPointException(int val) {
-	if(!val) {
-		printf("Nu se poate imparti la 0\n");
-		exit(0);
 	}
 }
 
@@ -493,6 +557,8 @@ void pushVariable(char* id, int type, struct var* exp) {
 
 	if (type == String) {
 		sprintf(v->arrayStr[0], "%s", exp->arrayStr[0]);
+	} else if (type == Bool) {
+		v->array[0] = exp->array[0] != 0;
 	} else {
 		v->array[0] = exp->array[0];
 	}
@@ -523,6 +589,11 @@ void pushArray(char* id, int type, struct var* exp) {
 
 	struct var *v = variables + totalVar;
 
+	if (v->type == String && exp->type != String || v->type != String && exp->type == String) {
+		printf(RED "Data types should match.\n" RESET);
+		exit(0);
+	}
+
 	sprintf(v->id, "%s", id);
 	v->type = type;
 	v->isArray = 1;
@@ -546,6 +617,8 @@ void pushVariableConst(char* id, int type, struct var* exp) {
 
 	if (type == String) {
 		sprintf(v->arrayStr[0], "%s", exp->arrayStr[0]);
+	} else if (type == Bool) {
+		v->array[0] = exp->array[0] != 0;
 	} else {
 		v->array[0] = exp->array[0];
 	}
@@ -557,52 +630,77 @@ void pushVariableConst(char* id, int type, struct var* exp) {
 struct var* comp(struct var* a, struct var* b, int op_type) {
 	
 	struct var* v = initializeVar();
+	double c;
 
 	switch (op_type) {
-	case PLUS:
-		v->type = Double;
-		v->array[0] = a->array[0] + b->array[0];
-		break;
-	case MINUS:
-		v->type = Double;
-		v->array[0] = a->array[0] - b->array[0];
-		break;
-	case PROD:
-		if (a->type == Integer && b->type == Integer) {
-			v->type = Integer;
-		} else {
-			v->type = Double;
-		}
+	case PLUS:;
+		c = a->array[0] + b->array[0];
 
-		v->array[0] = a->array[0] * b->array[0];
+		if (c == (int)c) {
+			v->type = Integer;
+			v->array[0] = (int)c;
+		} else {
+			v->type = Float;
+			v->array[0] = c;
+		}
 		break;
-	case DIV:
-		v->type = Double;
+	case MINUS:;
+		c = a->array[0] - b->array[0];
+
+		if (c == (int)c) {
+			v->type = Integer;
+			v->array[0] = (int)c;
+		} else {
+			v->type = Float;
+			v->array[0] = c;
+		}
+		break;
+	case PROD:;
+		c = a->array[0] * b->array[0];
+
+		if (c == (int)c) {
+			v->type = Integer;
+			v->array[0] = (int)c;
+		} else {
+			v->type = Float;
+			v->array[0] = c;
+		}
+		break;
+	case DIV:;
 		if (b->array[0] == 0) {
 			printf("Division with 0 is not possible\n");
 			exit(0);
 		}
-		v->array[0] = a->array[0] / b->array[0];
+
+	    c = a->array[0] / b->array[0];
+
+		if (c == (int)c) { 
+			v->type = Integer;
+			v->array[0] = (int)c;
+		} else {
+			v->type = Float;
+			v->array[0] = c;
+		}
 		break;
-	case LS:
+	case LS:;
 		v->type = Integer;
-		v->array[0] = a->array[0] < b->array[0];
+		v->array[0] = (int)(a->array[0] < b->array[0]);
 		break;
-	case LEQ:
+	case LEQ:;
 		v->type = Integer;
-		v->array[0] = a->array[0] <= b->array[0];
+		v->array[0] = (int)(a->array[0] <= b->array[0]);
 		break;
-	case GE:
+	case GE:;
 		v->type = Integer;
-		v->array[0] = a->array[0] > b->array[0];
+		v->array[0] = (int)(a->array[0] > b->array[0]);
 		break;
-	case GEQ:
+	case GEQ:;
 		v->type = Integer;
-		v->array[0] = a->array[0] >= b->array[0];
+		v->array[0] = (int)(a->array[0] >= b->array[0]);
 		break;
-	case EQEQ:
+	case EQEQ:;
 		v->type = Integer;
-		v->array[0] = a->array[0] == b->array[0];
+		v->array[0] = (int)(a->array[0] == b->array[0]);
 		break;
 	}
 
@@ -631,16 +729,56 @@ void printValue(struct var* node) {
 		printf("%d\n", (int)node->array[0]);
 		break;
 	case Character:
+		if (node->isArray == 1) {
+			n = node->arraySize;
+			printf("{");
+			for (int i = 0; i < n - 1; i++) {
+				printf("%c, ", (char)node->array[i]);
+			}
+			printf("%d", (int)node->array[n - 1]);
+			printf("}\n");
+			break;
+		}
 		printf("%c\n", (char)node->array[0]);
 		break;
 	case Float:
+		if (node->isArray == 1) {
+			n = node->arraySize;
+			printf("{");
+			for (int i = 0; i < n - 1; i++) {
+				printf("%f, ", (float)node->array[i]);
+			}
+			printf("%f", (float)node->array[n - 1]);
+			printf("}\n");
+			break;
+		}
 		printf("%f\n", (float)node->array[0]);
 		break;
-	case Double:
-		printf("%f\n", (double)node->array[0]);
-		break;
 	case String:
+		if (node->isArray == 1) {
+			n = node->arraySize;
+			printf("{");
+			for (int i = 0; i < n - 1; i++) {
+				printf("\"%s\", ", node->arrayStr[i]);
+			}
+			printf("\"%s\"", node->arrayStr[n - 1]);
+			printf("}\n");
+			break;
+		}
 		printf("%s\n", (char*)node->arrayStr[0]);
+		break;
+	case Bool:
+		if (node->isArray == 1) {
+			n = node->arraySize;
+			printf("{");
+			for (int i = 0; i < n - 1; i++) {
+				printf("\"%d\", ", (int)node->array[i]);
+			}
+			printf("\"%d\"", (int)node->array[n - 1]);
+			printf("}\n");
+			break;
+		}
+		printf("%d\n", (int)node->array[0]);
 		break;
 	default:
 		break;

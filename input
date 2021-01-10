@@ -1,13 +1,5 @@
-Integer a = 9 == 1 + 8;
 
-Integer hg[7];
-hg[4] = 7;
-hg[3] = 9;
-
-hg[2] = -1043;
-
-print hg;
-
+print 2.6-1.6;
 
 Const Integer b = 3 + 7 * 9 + 12 + 432;
 print b;
