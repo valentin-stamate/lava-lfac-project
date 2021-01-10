@@ -331,7 +331,7 @@ struct var* temporaryPointArr(char* id, struct var* node) {
 	}
 
 	if (n >= v->arraySize) {
-		printf(RED "Array size exceded: %d, where maximum is %d.\n" RESET, n, v->arraySize);
+		printf(RED "Array size exceded for variable %s from expression: %d, where maximum index is %d.\n" RESET, id, n, v->arraySize - 1);
 		exit(0);
 	}
 
@@ -443,7 +443,7 @@ void updateArrValue(char* id, struct var* exp_1, struct var* exp_2) {
 	}
 
 	if (n >= v->arraySize) {
-		printf(RED "Array size exceded: %d, where maximum is %d.\n" RESET, n, v->arraySize);
+		printf(RED "Array size exceded for %s: %d, where maximum index is %d.\n" RESET, id, n, v->arraySize - 1);
 		exit(0);
 	}
 

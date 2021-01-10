@@ -1,9 +1,9 @@
 Integer a = 9 == 1 + 8;
-Float b = 6.456;
-a = b;
+Float d = 6.456;
+a = d;
 
 print a;
-print b;
+print d;
 
 Float arr[8];
 arr[0] = 342.2342;
@@ -12,10 +12,10 @@ arr[2] = 934.3249023;
 arr[3] = 2.54324;
 arr[7] = 8.5;
 
-Float arrr[4];
-arrr = arr;
+Float arr5453_543[4];
+arr5453_543[6] = "dasd";
 
-print arrr;
+print arr5453_543;
 
 Const Integer b = 3 + 7 * 9 + 12 + 432;
 print b;

@@ -39,7 +39,7 @@ int yylex();
 "return"                	{return RETURN;}
 
 [()<>]                  	{return yytext[0];}
-[a-zA-Z]+			    	{strcpy(yylval.string, yytext); return IDENTIFIER;}
+[a-zA-Z]+([_]*[0-9]*)*	    {strcpy(yylval.string, yytext); return IDENTIFIER;}
 ["].*["]                	{strcpy(yylval.string, yytext + 1); yylval.string[strlen(yytext + 1) - 1] = '\0'; return String_Value;}
 ['].[']                 	{yytext[2] = '\0'; strcpy(yylval.string, yytext + 1); return Character_Value;}
 [0]|[-]?[1-9][0-9]*     	{yylval.num = atoi(yytext); return number;}
