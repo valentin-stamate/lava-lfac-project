@@ -23,6 +23,10 @@ struct var {
 	int type;
 	int cnst;
 
+	// normal type
+	int type;
+	int cnst;
+
 	// array
 	int arraySize;
 	double array[100];

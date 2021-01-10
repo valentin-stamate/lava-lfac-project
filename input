@@ -1,5 +1,5 @@
 Integer a = 9 == 1 + 8;
-#Float d = 6.456;#
+Float d = 6.456;
 a = d;
 
 print a;
@@ -46,7 +46,10 @@ if (7) {
 
 }
 
-Integer fun dsa() {
+Integer fun dsa(Integer a, Float gf) {
     return 9;
 }
+print dsa;
+
+
 
