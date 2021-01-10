@@ -55,7 +55,7 @@ Integer fun dsa(Integer a, Float gf) {
 }
 print dsa;
 
-print "Ana are" + " mere";
+print "dsdsa  s s s" + 3;
 
 
 

@@ -745,9 +745,27 @@ struct var* comp(struct var* a, struct var* b, int op_type) {
 		if (a->type == String && b->type == String) {
 			v->type = String;
 			strcpy(v->arrayStr[0], "");
-			printf("-- %s + %s--\n", a->arrayStr[0], b->arrayStr[0]);
 			strcat(v->arrayStr[0], a->arrayStr[0]);
 			strcat(v->arrayStr[0], b->arrayStr[0]);
+			break;
+		}
+
+		if (a->type != String && b->type == String) {
+			v->type = String;
+			strcpy(v->arrayStr[0], "");
+			sprintf(v->arrayStr[0], "%f", (float)a->array[0]);
+			strcat(v->arrayStr[0], b->arrayStr[0]);
+			break;
+		}
+
+		if (a->type == String && b->type != String) {
+			v->type = String;
+			strcpy(v->arrayStr[0], "");
+
+			strcat(v->arrayStr[0], a->arrayStr[0]);
+			char bfr[10];
+			sprintf(bfr, "%f", (float)b->array[0]);
+			strcat(v->arrayStr[0], bfr);
 			break;
 		}
 
