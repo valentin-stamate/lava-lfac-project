@@ -1,12 +1,21 @@
 Integer a = 9 == 1 + 8;
+Float b = 6.456;
+a = b;
 
-Integer hg[7];
-hg[4] = 7;
-hg[3] = 9;
+print a;
+print b;
 
-hg[2] = -1043;
+Float arr[8];
+arr[0] = 342.2342;
+arr[1] = 6493;
+arr[2] = 934.3249023;
+arr[3] = 2.54324;
+arr[7] = 8.5;
 
-print hg;
+Float arrr[4];
+arrr = arr;
+
+print arrr;
 
 Const Integer b = 3 + 7 * 9 + 12 + 432;
 print b;

@@ -14,7 +14,6 @@ int yylex();
 "exit"				   		{return exit_command;}
 "Integer"              	 	{yylval.type_id = Integer; return Integer;}
 "Float"                 	{yylval.type_id = Float; return Float;}
-"Double"                	{yylval.type_id = Double; return Double;}
 "Char"                  	{yylval.type_id = Character; return Character;}
 "String"                	{yylval.type_id = String; return String;}
 "Bool"                  	{yylval.type_id = Bool; return Bool;}
