@@ -37,6 +37,7 @@ int yylex();
 "elif"                  	{return ELIF;}
 "fun"                   	{return FUN;}
 "return"                	{return RETURN;}
+"Eval"                      {return EVAL;}
 
 [()<>]                  	{return yytext[0];}
 [a-zA-Z]+([_]*[0-9]*)*	    {strcpy(yylval.string, yytext); return IDENTIFIER;}
