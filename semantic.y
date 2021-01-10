@@ -66,6 +66,7 @@ void FloatingPointException(int);
 void pushVariable(char*, int, struct var*);
 void pushVariableConst(char*, int, struct var*);
 void pushEmptyVariable(char*, int);
+void pushStructVariable(char*);
 struct var* comp(struct var*, struct var*, int);
 void printValue(struct var*);
 void print_simbol_table(struct var*,int);
@@ -105,7 +106,7 @@ char* defToDataType(int);
 %token ELSE
 %token ELIF
 
-%token FUN RETURN
+%token FUN RETURN DEFINE_TYPE
 %type<num> FUNCTION
 
 %token <string> String_Value Character_Value
@@ -143,21 +144,25 @@ char* defToDataType(int);
 /* descriptions of expected inputs     corresponding actions (in C) */
 
 
-program : lines { print_simbol_table(variables,totalVar); printf(BGRN "Program corect sintactic\n" RESET); }
+program : lines { print_simbol_table(variables,totalVar);printf(BGRN "Program corect sintactic\n\n" RESET); }
 		;
 
 lines   : line			 			{;}
 		| lines line				{;}
 		;
 
-line 	: assignment ';'				{;}
-		| exit_command ';'				{exit(EXIT_SUCCESS);}
-		| print exp ';'					{printValue($2);}
-		| stat 							{;}
-		| FUNCTION 				   		{;}
-		| EVAL '(' exp ')' ';'          {Eval_function($3);}
+line 	: assignment ';'								{;}
+		| exit_command ';'								{exit(EXIT_SUCCESS);}
+		| print exp ';'									{printValue($2);}
+		| stat 											{;}
+		| FUNCTION 				   						{;}
+		| EVAL '(' exp ')' ';'          				{Eval_function($3);}
+		| DEFINE_TYPE '{' ELEMENTS '}' IDENTIFIER ';'   {pushStructVariable($5);}
 		;
 
+ELEMENTS : DATA_TYPE IDENTIFIER ';' ELEMENTS	{;}
+		 |										{;}
+		 ;
 
 DATA_TYPE   : Integer   	 {$$ = $1;}
 			| Float			 {$$ = $1;}
@@ -217,7 +222,7 @@ stat	: IF '(' exp ')' smtm				{;}
 		| IF '(' exp ')' smtm ELSE_ 		{;}
 		| IF '(' exp ')' smtm ELIF_S	 	{;}
 		| WHILE '(' exp ')' smtm			{;}
-		| FOR '(' ';' exp ';' IDENTIFIER EQUAL exp ')' smtm					{;}
+		| FOR '(' IDENTIFIER EQUAL exp ';' exp ';' IDENTIFIER EQUAL exp ')' smtm					{;}
 		;
 
 ELSE_   : ELSE smtm 						{;}
@@ -266,6 +271,22 @@ smtm_fun	: '{' smtm_types RETURN exp ';' '}' 		{;}
 			;
 
 %%
+void pushStructVariable(char*id)
+{
+	int i = getVariableIndex(id);
+
+	if (i != -1) {
+		printf(BRED "The variable " BBLU "%s" BRED " was already declared here\n", id);
+		exit(0);
+	}
+
+	struct var *v = variables + totalVar;
+	
+	sprintf(v->id, "%s", id);
+	v->type = 0;
+
+	totalVar++;
+}
 
 void pushFunction(char* id, int retType, struct parameter* p) {
 	int i = getVariableIndex(id);
@@ -332,30 +353,7 @@ void print_simbol_table(struct var* v,int n)
  	
  	for(int i=0;i<n;i++)
 	{
-		if(v[i].var_type == TYPE_FUNCTION)
-		{
-            fprintf(fd, "Function : ");
-			fprintf(fd, "%s %s", defToDataType(v[i].type), v[i].id);
-			int nr = v[i].parameterNum;
-			if (nr != 0) 
-			{   
-				fprintf(fd,  " (");
-				for (int j = 0; j < nr-1 ; j++)
-				{
-					fprintf(fd, "%s, ", defToDataType(v[i].parameterTypes[j]));
-				}
-				fprintf(fd, "%s", defToDataType(v[i].parameterTypes[nr-1]));
-				fprintf(fd,  ") ");
-			}
-			else
-			{
-			 fprintf(fd, "();");
-			}
-
-			fprintf(fd, "\n");
-			
-		}
-		else if(!v[i].var_type == TYPE_ARRAY)
+	    if(v[i].var_type != TYPE_ARRAY)
 		{
 			fprintf(fd,"nume : %s  ",v[i].id);
 			switch (v[i].type) {
@@ -374,13 +372,17 @@ void print_simbol_table(struct var* v,int n)
 			case Bool:
 				fprintf(fd, "tip = Bool valoare = %d ", (int)v[i].array[0]);
 				break;
+			case 0:
+				fprintf(fd, "tip = User Defined Type\n");
+				break;
 			default:
 				break;
 			}
-			if(v[i].cnst)
-				fprintf(fd, "constant \n");
-			else
-				fprintf(fd, "not constant \n");
+			if(v[i].type!=0)
+				if(v[i].cnst)
+					fprintf(fd, "constant \n");
+				else
+					fprintf(fd, "not constant \n");
 		}
 		else
 		{
@@ -428,7 +430,33 @@ void print_simbol_table(struct var* v,int n)
 		}
 
 	}
+	fprintf(fd,"\n");
+    for(int i=0;i<n;i++)
+	{
+		if(v[i].var_type == TYPE_FUNCTION)
+		{
+            fprintf(fd, "Function : ");
+			fprintf(fd, "%s %s", defToDataType(v[i].type), v[i].id);
+			int nr = v[i].parameterNum;
+			if (nr != 0) 
+			{   
+				fprintf(fd,  " (");
+				for (int j = 0; j < nr-1 ; j++)
+				{
+					fprintf(fd, "%s, ", defToDataType(v[i].parameterTypes[j]));
+				}
+				fprintf(fd, "%s", defToDataType(v[i].parameterTypes[nr-1]));
+				fprintf(fd,  ") ");
+			}
+			else
+			{
+			 fprintf(fd, "();");
+			}
 
+			fprintf(fd, "\n");
+			
+		}
+	}
 }
 
 struct var* temporaryPointNum(double val, int type) {

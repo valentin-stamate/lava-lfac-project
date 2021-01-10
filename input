@@ -1,9 +1,17 @@
+Define Type 
+{
+ Integer x;
+ Float y;
+} x;
+
 Integer a = 9 == 1 + 8;
 Float d = 6.456;
 a = d;
-
-Char g[10];
-g[10] = "dsad";
+Bool fun Nr_Prim(Integer x) {
+    return 0;
+}
+Char g[4];
+g[0] = 'L';g[1] = 'F';g[2] = 'A';g[3] = 'C';
 print g;
 
 print a;
@@ -36,9 +44,12 @@ While(h)
 {
 print h;
 }
-For(;a<b;a=a+2)
+For(a=0;a<b;a=a+2)
 {
     print h;
+}
+Float fun My_Function(Char a, Float gf) {
+    return 9;
 }
 if (7) {
 
@@ -50,14 +61,13 @@ if (7) {
 
 }
 
-Integer fun dsa(Bool a, Float gf) {
-    return 9;
+Integer fun cmmdc(Integer a, Integer B) {
+    return 1;
 }
 
-Integer dsa;
 
+Const Bool false=0;
 
-print dsa(1) + 7;
-
+print(cmmdc(0,1));
 
 

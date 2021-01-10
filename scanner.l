@@ -17,6 +17,7 @@ int yylex();
 "Char"                          	{yylval.type_id = Character; return Character;}
 "String"                        	{yylval.type_id = String; return String;}
 "Bool"                          	{yylval.type_id = Bool; return Bool;}
+"Define Type"                       {return DEFINE_TYPE;}
 "Const"                         	{return Const;}
 "<="                            	{return LEQ;}
 ">="                    	        {return GEQ;}
