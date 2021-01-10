@@ -271,7 +271,7 @@ void pushFunction(char* id, int retType, struct parameter* p) {
 	int i = getVariableIndex(id);
 
 	if (i != -1) {
-		printf("Name for function %s was already taken\n", id);
+		printf(BRED "Name for function " BBLK "%s" BRED " was already taken.\n" RESET, id);
 		exit(0);
 	}
 
@@ -312,7 +312,7 @@ void Eval_function(struct var* x)
   		printf(BGRN "%d\n" RESET,(int)x->array[0]);
   else
   {
-	  	printf("Eval function must have an integer type parameter\n");
+	  	printf(BYEL "Eval function must have an integer type parameter.\n" RESET);
 		exit(0);
   }
    
@@ -458,19 +458,19 @@ struct var* temporaryPointFun(char* id, struct parameter* pr) {
 	int i = getVariableIndex(id);
 
 	if (i == -1) {
-		printf("Function %s was not declared in this scope.\n", id);
+		printf(BRED "Function " BYEL "%s" BRED " was not declared in this scope.\n", id);
 		exit(0);
 	}
 
 	struct var* v = variables + i;
 
 	if (v->var_type != TYPE_FUNCTION) {
-		printf(BRED "%s should be a function, not a variable.\n" RESET, v->id);
+		printf(BBLU "%s" BRED " should be a function, not a variable.\n" RESET, v->id);
 		exit(0);
 	}
 
 	if (v->parameterNum != pr->paramNum) {
-		printf(BRED "The number of variables should match for function %s.\n" RESET, v->id);
+		printf(BRED "The number of variables should match for function " BBLU "%s" BRED ".\n" RESET, v->id);
 		exit(0);
 	}
 
@@ -481,8 +481,8 @@ struct var* temporaryPointFun(char* id, struct parameter* pr) {
 
 	for (int i = 0; i < n; i++) {
 		if (funParams[i] != callParams[i]) {
-			printf(BRED "%s parameters should match function definition.\n" RESET, v->id);
-			printf(BRED "Parameter %d is %s but in definition is %s.\n" RESET, i + 1, defToDataType(callParams[i]), defToDataType(funParams[i]));
+			printf(BBLU "%s" BRED " parameters should match function definition.\n" RESET, v->id);
+			printf(BRED "Parameter " BMAG "%d" BRED " is " BBLU "%s" BBLU " but in definition is " BBLU "%s" BRED ".\n" RESET, i + 1, defToDataType(callParams[i]), defToDataType(funParams[i]));
 			exit(0);
 		}
 	}
@@ -498,7 +498,7 @@ struct var* temporaryPointVar(char* id) {
 	int i = getVariableIndex(id);
 
 	if (i == -1) {
-		printf("%s was not declared in this scope.\n", id);
+		printf(BYEL "%s" BRED " was not declared in this scope.\n", id);
 		exit(0);
 	}
 	struct var* v = variables + i;
@@ -514,14 +514,14 @@ struct var* temporaryPointArr(char* id, struct var* node) {
 	int i = getVariableIndex(id);
 
 	if (i == -1) {
-		printf("%s was not declared in this scope\n", id);
+		printf(BYEL "%s" BRED " was not declared in this scope.\n", id);
 		exit(0);
 	}
 
 	struct var *v = variables + i;
 
 	if (v->var_type != TYPE_ARRAY) {
-		printf(BRED"Varialbe %s is not an array type.\n" RESET, v->id);
+		printf(BRED "Varialbe " BBLU "%s" BRED " is not an array type.\n" RESET, v->id);
 		exit(0);
 	}
 
@@ -533,12 +533,12 @@ struct var* temporaryPointArr(char* id, struct var* node) {
 	int n = (int)node->array[0];
 
 	if (n < 0) {
-		printf(BRED"Array index should be more than 0 but it's %d.\n" RESET, n);
+		printf(BRED "Array index should be more than 0 but it's " BMAG "%d" BRED ".\n" RESET, n);
 		exit(0);
 	}
 
 	if (n >= v->arraySize) {
-		printf(BRED"Array size exceded for variable %s from expression: %d, where maximum index is %d.\n" RESET, id, n, v->arraySize - 1);
+		printf(BRED "Array size exceded for variable " BBLU "%s" BRED " from expression: " BMAG "%d" BRED ", where maximum index is " BMAG "%d" BRED ".\n" RESET, id, n, v->arraySize - 1);
 		exit(0);
 	}
 
@@ -577,35 +577,35 @@ void updateValue(char* id, struct var* exp) {
 	int i = getVariableIndex(id);
 
 	if (i == -1) {
-		printf("%s was not declared in this scope\n", id);
+		printf(BYEL "%s" BRED " was not declared in this scope.\n", id);
 		exit(0);
 	} 
 
 	struct var *vr = variables + i;
 	
 	if (vr->var_type == TYPE_FUNCTION) {
-		printf(BRED"Function %s cannot be changed.\n" RESET, vr->id);
+		printf(BRED"Function " BBLU "%s" BRED " cannot be changed.\n" RESET, vr->id);
 		exit(0);
 	}
 
 	if (vr->var_type == TYPE_ARRAY && exp->var_type != TYPE_ARRAY) {
-		printf(BRED"Variable %s is an array type but the expression is not.\n" RESET, vr->id);
+		printf(BRED "Variable " BBLU "%s" BRED " is an array type but the expression is not.\n" RESET, vr->id);
 		exit(0);
 	}
 
 	if (vr->var_type != TYPE_ARRAY && exp->var_type == TYPE_ARRAY) {
-		printf(BRED"Variable %s is a normal type but expression is an array.\n" RESET, vr->id);
+		printf(BRED "Variable " BBLU "%s" BRED " is a normal type but expression is an array.\n" RESET, vr->id);
 		exit(0);
 	}
 	
 	if (vr->type == String && exp->type != String || vr->type != String && exp->type == String) {
-		printf(BRED"Data types should match.\n" RESET);
+		printf(BRED "Data types should match.\n" RESET);
 		exit(0);
 	}
 	
 	if(vr->cnst)
 	{
-		printf("Constat variable %s cannot be modified\n", id);
+		printf(BRED "Constat variable " BBLU "%s" BRED " cannot be modified.\n", id);
 		exit(0);
 	} 
 
@@ -641,26 +641,26 @@ void updateArrValue(char* id, struct var* exp_1, struct var* exp_2) {
 	int i = getVariableIndex(id);
 
 	if (i == -1) {
-		printf("%s was not declared in this scope.\n", id);
+		printf(BYEL "%s" BRED " was not declared in this scope.\n" RESET , id);
 		exit(0);
 	}
 
 	struct var *v = variables + i;
 
 	if (v->var_type == TYPE_FUNCTION) {
-		printf(BRED"Invalid expression for function %s.\n" RESET, v->id);
+		printf(BRED "Invalid expression for function " BBLU "%s" BRED ".\n" RESET, v->id);
 		exit(0);
 	}
 
 	if (exp_1->type == String) {
-		printf(BRED"This array type cannot be accessed with a string expression.\n" RESET);
+		printf(BRED "This array type cannot be accessed with a string expression.\n" RESET);
 		exit(0);
 	}
 
 	int n = (int)exp_1->array[0];
 
 	if (n < 0) {
-		printf(BRED"Array index should be more than 0 but it's %d.\n" RESET, n);
+		printf(BRED "Array index should be more than " BMAG "0" BRED " but it's " BMAG "%d" BRED ".\n" RESET, n);
 		exit(0);
 	}
 
@@ -670,7 +670,7 @@ void updateArrValue(char* id, struct var* exp_1, struct var* exp_2) {
 	}
 
 	if (v->type == String && exp_2->type != String || v->type != String && exp_2->type == String) {
-		printf(BRED"Data type should match for variable %s[%d].\n" RESET, id, n);
+		printf(BRED "Data type should match for variable " BBLU "%s" BWHT "[" BMAG "%d" BWHT "]" BRED ".\n" RESET, id, n);
 		exit(0);
 	}
 
@@ -687,7 +687,7 @@ void pushEmptyVariable(char* id, int type) {
 	int i = getVariableIndex(id);
 
 	if (i != -1) {
-		printf("The variable %s was already declared here\n", id);
+		printf(BRED "The variable " BBLU "%s" BRED " was already declared here\n", id);
 		exit(0);
 	}
 
@@ -709,7 +709,7 @@ void pushVariable(char* id, int type, struct var* exp) {
 	int i = getVariableIndex(id);
 
 	if (i != -1) {
-		printf("The variable %s was already declared here\n", id);
+		printf(BRED "The variable " BBLU "%s" BRED " was already declared here\n", id);
 		exit(0);
 	}
 
@@ -734,26 +734,26 @@ void pushArray(char* id, int type, struct var* exp) {
 	int i = getVariableIndex(id);
 
 	if (i != -1) {
-		printf("The variable %s was already declared here\n", id);
+		printf(BRED "The variable " BBLU "%s" BRED " was already declared here\n", id);
 		exit(0);
 	}
 
 	if (exp->type == String) {
-		printf(BRED"Array types cannot be declared with string expressions.\n" RESET);
+		printf(BYEL "Array types cannot be declared with string expressions.\n" RESET);
 		exit(0);
 	}
 
 	int n = (int)exp->array[0];
 
 	if (n <= 0) {
-		printf(BRED"The array size should be at least 1.\n" RESET);
+		printf(BYEL "The array size should be at least 1.\n" RESET);
 		exit(0);
 	}
 
 	struct var *v = variables + totalVar;
 
 	if (v->type == String && exp->type != String || v->type != String && exp->type == String) {
-		printf(BRED"Data types should match.\n" RESET);
+		printf(BYEL "Data types should match.\n" RESET);
 		exit(0);
 	}
 
@@ -863,7 +863,7 @@ struct var* comp(struct var* a, struct var* b, int op_type) {
 		else
 			v->type = Float;
 		if (b->array[0] == 0) {
-			printf("Division with 0 is not possible\n");
+			printf(BRED "Division with 0 is not possible.\n" RESET);
 			exit(0);
 		}
 
@@ -1046,5 +1046,5 @@ int main (void) {
 
 void yyerror (char *s) 
 {
-	printf (BRED"Error: %s line %d\n"RESET, s,yylineno);
+	printf (BRED "Error: %s line %d\n" RESET, s, yylineno);
 }

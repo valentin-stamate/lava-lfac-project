@@ -3,7 +3,7 @@ Float d = 6.456;
 a = d;
 
 Char g[10];
-g[0] = '-';
+g[10] = "dsad";
 print g;
 
 print a;
@@ -53,9 +53,11 @@ if (7) {
 Integer fun dsa(Bool a, Float gf) {
     return 9;
 }
-print dsa;
 
-print dsa(1, 6.6) + 7;
+Integer dsa;
+
+
+print dsa(1) + 7;
 
 
 
