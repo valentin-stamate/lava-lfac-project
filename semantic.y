@@ -849,7 +849,7 @@ void printValue(struct var* node) {
 			for (int i = 0; i < n - 1; i++) {
 				printf("%c, ", (char)node->array[i]);
 			}
-			printf("%d", (int)node->array[n - 1]);
+			printf("%c", (char)node->array[n - 1]);
 			printf("}\n");
 			break;
 		}

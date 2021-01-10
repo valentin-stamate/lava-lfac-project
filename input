@@ -2,6 +2,10 @@ Integer a = 9 == 1 + 8;
 Float d = 6.456;
 a = d;
 
+Char g[10];
+g[0] = '-';
+print g;
+
 print a;
 print d;
 
