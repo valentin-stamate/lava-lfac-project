@@ -23,6 +23,10 @@ struct var {
 	int type;
 	int cnst;
 
+	// normal type
+	int type;
+	int cnst;
+
 	// array
 	int arraySize;
 	double array[100];
@@ -316,9 +320,32 @@ void print_simbol_table(struct var* v,int n)
  	
  	for(int i=0;i<n;i++)
 	{
-		fprintf(fd,"nume : %s  ",v[i].id);
-		if(!v[i].var_type == TYPE_ARRAY)
+		if(v[i].var_type == TYPE_FUNCTION)
 		{
+            fprintf(fd, "Function : ");
+			fprintf(fd, "%s %s", defToDataType(v[i].type), v[i].id);
+			int nr = v[i].parameterNum;
+			if (nr != 0) 
+			{   
+				fprintf(fd,  " (");
+				for (int j = 0; j < nr-1 ; j++)
+				{
+					fprintf(fd, "%s, ", defToDataType(v[i].parameterTypes[j]));
+				}
+				fprintf(fd, "%s", defToDataType(v[i].parameterTypes[nr-1]));
+				fprintf(fd,  ") ");
+			}
+			else
+			{
+			 fprintf(fd, "();");
+			}
+
+			fprintf(fd, "\n");
+			
+		}
+		else if(!v[i].var_type == TYPE_ARRAY)
+		{
+			fprintf(fd,"nume : %s  ",v[i].id);
 			switch (v[i].type) {
 			case Integer:
 				fprintf(fd, "tip = Integer valoare = %d  ", (int)v[i].array[0]);
@@ -345,6 +372,7 @@ void print_simbol_table(struct var* v,int n)
 		}
 		else
 		{
+			fprintf(fd,"nume : %s  ",v[i].id);
 			switch (v[i].type) {
 			case Integer:
 				fprintf(fd, "tip = Integer Array ");
