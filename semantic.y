@@ -75,8 +75,8 @@ void Eval_function(struct var*);
 %token PLUS MINUS PROD DIV EQUAL
 
 %type<num> stat
-%token IF
-%type<num> smtm smtm_type smtm_types smtm_fun ELSE_ ELIF_ ELIF_S
+%token IF WHILE FOR
+%type<num> smtm smtm_type smtm_types smtm_fun ELSE_ ELIF_ ELIF_S 
 %token ELSE
 %token ELIF
 
@@ -182,6 +182,8 @@ stat	: IF '(' exp ')' smtm				{;}
 		| IF '(' exp ')' smtm ELIF_S ELSE_ 	{;}
 		| IF '(' exp ')' smtm ELSE_ 		{;}
 		| IF '(' exp ')' smtm ELIF_S	 	{;}
+		| WHILE '(' exp ')' smtm			{;}
+		| FOR '(' ';' exp ';' IDENTIFIER EQUAL exp ')' smtm					{;}
 		;
 
 ELSE_   : ELSE smtm 						{;}
@@ -274,6 +276,9 @@ void print_simbol_table(struct var* v,int n)
 			case String:
 				fprintf(fd, "tip = String valoare = \"%s\" ", (char*)v[i].arrayStr[0]);
 				break;
+			case Bool:
+				fprintf(fd, "tip = Bool valoare = %d ", (int)v[i].array[0]);
+				break;
 			default:
 				break;
 			}
@@ -311,6 +316,13 @@ void print_simbol_table(struct var* v,int n)
 				for(int j=0;j<v[i].arraySize;j++)
 				{
 					fprintf(fd," %s[%d] = \"%s\" ", v[i].id, j, (char*)v[i].arrayStr[j]);
+				}
+				break;
+			case Bool:
+				fprintf(fd, "tip = Bool Array ");
+				for(int j=0;j<v[i].arraySize;j++)
+				{
+				 	fprintf(fd,"%s[%d] = %d  ", v[i].id, j, (int)v[i].array[j]);
 				}
 				break;
 			default:
@@ -668,6 +680,11 @@ struct var* comp(struct var* a, struct var* b, int op_type) {
 		}
 		break;
 	case DIV:;
+	    double c = a->array[0] / b->array[0];
+		if (c == (int)c) 
+			v->type = Integer;
+		else
+			v->type = Float;
 		if (b->array[0] == 0) {
 			printf("Division with 0 is not possible\n");
 			exit(0);
