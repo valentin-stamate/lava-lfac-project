@@ -353,7 +353,7 @@ void print_simbol_table(struct var* v,int n)
  	
  	for(int i=0;i<n;i++)
 	{
-	    if(v[i].var_type != TYPE_ARRAY)
+	    if(v[i].var_type != TYPE_ARRAY && v[i].var_type != TYPE_FUNCTION)
 		{
 			fprintf(fd,"nume : %s  ",v[i].id);
 			switch (v[i].type) {
@@ -384,7 +384,7 @@ void print_simbol_table(struct var* v,int n)
 				else
 					fprintf(fd, "not constant \n");
 		}
-		else
+		else if(v[i].var_type != TYPE_FUNCTION)
 		{
 			fprintf(fd,"nume : %s  ",v[i].id);
 			switch (v[i].type) {
