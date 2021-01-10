@@ -2,6 +2,10 @@ Integer a = 9 == 1 + 8;
 Float d = 6.456;
 a = d;
 
+Char g[10];
+g[10] = "dsad";
+print g;
+
 print a;
 print d;
 
@@ -46,10 +50,14 @@ if (7) {
 
 }
 
-Integer fun dsa(Integer a, Float gf) {
+Integer fun dsa(Bool a, Float gf) {
     return 9;
 }
-print dsa;
+
+Integer dsa;
+
+
+print dsa(1) + 7;
 
 
 
