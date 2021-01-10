@@ -50,12 +50,12 @@ if (7) {
 
 }
 
-Integer fun dsa(Integer a, Float gf) {
+Integer fun dsa(Bool a, Float gf) {
     return 9;
 }
 print dsa;
 
-print "dsdsa  s s s" + 3;
+print dsa(1, 6.6) + 7;
 
 
 

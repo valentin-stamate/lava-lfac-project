@@ -40,8 +40,14 @@ struct parameter {
 
 struct var* initializeVar();
 
-#define RED "\e[1;31m"
-#define GREEN "\e[1;32m"
+#define BBLK "\e[1;30m"
+#define BRED "\e[1;31m"
+#define BGRN "\e[1;32m"
+#define BYEL "\e[1;33m"
+#define BBLU "\e[1;34m"
+#define BMAG "\e[1;35m"
+#define BCYN "\e[1;36m"
+#define BWHT "\e[1;37m"
 #define RESET "\e[0m"
 
 int totalVar = 0;
@@ -51,6 +57,7 @@ struct var* temporaryPointNum(double, int);
 struct var* temporaryPointStr(void*, int);
 struct var* temporaryPointVar(char*);
 struct var* temporaryPointArr(char*, struct var*);
+struct var* temporaryPointFun(char*, struct parameter*);
 
 void freeVar(struct var* v);
 int getVariableIndex(char*);
@@ -104,7 +111,7 @@ char* defToDataType(int);
 %token <string> String_Value Character_Value
 
 %type <type_id> paramentru
-%type<funParam> lista_param more_params
+%type<funParam> lista_param more_params fun_call_list more_call_param
 
 %token EVAL
 
@@ -136,7 +143,7 @@ char* defToDataType(int);
 /* descriptions of expected inputs     corresponding actions (in C) */
 
 
-program : lines { print_simbol_table(variables,totalVar); printf("Program corect sintactic\n"); }
+program : lines { print_simbol_table(variables,totalVar); printf(BGRN "Program corect sintactic\n" RESET); }
 		;
 
 lines   : line			 			{;}
@@ -188,13 +195,22 @@ exp    	: term                     	{$$ = $1;}
 		;
 
 
-term	: IDENTIFIER			{$$ = temporaryPointVar($1);} 
-		| IDENTIFIER '[' exp ']'{$$ = temporaryPointArr($1, $3);}
-   		| number                {$$ = temporaryPointNum($1, Integer);}
-		| number_r				{$$ = temporaryPointNum($1, Float);}
-		| Character_Value		{$$ = temporaryPointStr($1, Character);}
-		| String_Value			{$$ = temporaryPointStr($1, String);}
+term	: IDENTIFIER						{$$ = temporaryPointVar($1);} 
+		| IDENTIFIER '[' exp ']'			{$$ = temporaryPointArr($1, $3);}
+		| IDENTIFIER '(' fun_call_list ')' 	{$$ = temporaryPointFun($1, $3);}
+   		| number                			{$$ = temporaryPointNum($1, Integer);}
+		| number_r							{$$ = temporaryPointNum($1, Float);}
+		| Character_Value					{$$ = temporaryPointStr($1, Character);}
+		| String_Value						{$$ = temporaryPointStr($1, String);}
         ;
+
+fun_call_list	: more_call_param			{$$ = $1;}
+				|							{$$ = initializeParam(0);}
+				;
+
+more_call_param : exp						{$$ = initializeParam($1->type);}
+				| more_call_param ',' exp	{pushParam($$, $3->type);}
+				;
 
 stat	: IF '(' exp ')' smtm				{;}
 		| IF '(' exp ')' smtm ELIF_S ELSE_ 	{;}
@@ -293,7 +309,7 @@ struct parameter* initializeParam(int type) {
 void Eval_function(struct var* x)
 {
   if(x->type == Integer)
-  		printf(GREEN "%d\n" RESET,(int)x->array[0]);
+  		printf(BGRN "%d\n" RESET,(int)x->array[0]);
   else
   {
 	  	printf("Eval function must have an integer type parameter\n");
@@ -438,11 +454,51 @@ struct var* temporaryPointStr(void* val, int type) {
 	return v;
 }
 
+struct var* temporaryPointFun(char* id, struct parameter* pr) {
+	int i = getVariableIndex(id);
+
+	if (i == -1) {
+		printf("Function %s was not declared in this scope.\n", id);
+		exit(0);
+	}
+
+	struct var* v = variables + i;
+
+	if (v->var_type != TYPE_FUNCTION) {
+		printf(BRED "%s should be a function, not a variable.\n" RESET, v->id);
+		exit(0);
+	}
+
+	if (v->parameterNum != pr->paramNum) {
+		printf(BRED "The number of variables should match for function %s.\n" RESET, v->id);
+		exit(0);
+	}
+
+	int n = v->parameterNum;
+
+	int *funParams = v->parameterTypes;
+	int *callParams = pr->parameterTypes;
+
+	for (int i = 0; i < n; i++) {
+		if (funParams[i] != callParams[i]) {
+			printf(BRED "%s parameters should match function definition.\n" RESET, v->id);
+			printf(BRED "Parameter %d is %s but in definition is %s.\n" RESET, i + 1, defToDataType(callParams[i]), defToDataType(funParams[i]));
+			exit(0);
+		}
+	}
+
+	v = initializeVar();
+	v->type = Integer;
+	v->array[0] = 0;
+
+	return v;
+}
+
 struct var* temporaryPointVar(char* id) {
 	int i = getVariableIndex(id);
 
 	if (i == -1) {
-		printf("%s was not declared in this scope\n", id);
+		printf("%s was not declared in this scope.\n", id);
 		exit(0);
 	}
 	struct var* v = variables + i;
@@ -465,24 +521,24 @@ struct var* temporaryPointArr(char* id, struct var* node) {
 	struct var *v = variables + i;
 
 	if (v->var_type != TYPE_ARRAY) {
-		printf(RED "Varialbe %s is not an array type.\n" RESET, v->id);
+		printf(BRED"Varialbe %s is not an array type.\n" RESET, v->id);
 		exit(0);
 	}
 
 	if (node->type == String) {
-		printf(RED "This array type cannot be accessed with a string expression.\n" RESET);
+		printf(BRED"This array type cannot be accessed with a string expression.\n" RESET);
 		exit(0);
 	}
 
 	int n = (int)node->array[0];
 
 	if (n < 0) {
-		printf(RED "Array index should be more than 0 but it's %d.\n" RESET, n);
+		printf(BRED"Array index should be more than 0 but it's %d.\n" RESET, n);
 		exit(0);
 	}
 
 	if (n >= v->arraySize) {
-		printf(RED "Array size exceded for variable %s from expression: %d, where maximum index is %d.\n" RESET, id, n, v->arraySize - 1);
+		printf(BRED"Array size exceded for variable %s from expression: %d, where maximum index is %d.\n" RESET, id, n, v->arraySize - 1);
 		exit(0);
 	}
 
@@ -499,7 +555,6 @@ struct var* temporaryPointArr(char* id, struct var* node) {
 	}
 
 	return exp;
-
 }
 
 void freeVar(struct var* v) {
@@ -529,22 +584,22 @@ void updateValue(char* id, struct var* exp) {
 	struct var *vr = variables + i;
 	
 	if (vr->var_type == TYPE_FUNCTION) {
-		printf(RED "Function %s cannot be changed.\n" RESET, vr->id);
+		printf(BRED"Function %s cannot be changed.\n" RESET, vr->id);
 		exit(0);
 	}
 
 	if (vr->var_type == TYPE_ARRAY && exp->var_type != TYPE_ARRAY) {
-		printf(RED "Variable %s is an array type but the expression is not.\n" RESET, vr->id);
+		printf(BRED"Variable %s is an array type but the expression is not.\n" RESET, vr->id);
 		exit(0);
 	}
 
 	if (vr->var_type != TYPE_ARRAY && exp->var_type == TYPE_ARRAY) {
-		printf(RED "Variable %s is a normal type but expression is an array.\n" RESET, vr->id);
+		printf(BRED"Variable %s is a normal type but expression is an array.\n" RESET, vr->id);
 		exit(0);
 	}
 	
 	if (vr->type == String && exp->type != String || vr->type != String && exp->type == String) {
-		printf(RED "Data types should match.\n" RESET);
+		printf(BRED"Data types should match.\n" RESET);
 		exit(0);
 	}
 	
@@ -593,29 +648,29 @@ void updateArrValue(char* id, struct var* exp_1, struct var* exp_2) {
 	struct var *v = variables + i;
 
 	if (v->var_type == TYPE_FUNCTION) {
-		printf(RED "Invalid expression for function %s.\n" RESET, v->id);
+		printf(BRED"Invalid expression for function %s.\n" RESET, v->id);
 		exit(0);
 	}
 
 	if (exp_1->type == String) {
-		printf(RED "This array type cannot be accessed with a string expression.\n" RESET);
+		printf(BRED"This array type cannot be accessed with a string expression.\n" RESET);
 		exit(0);
 	}
 
 	int n = (int)exp_1->array[0];
 
 	if (n < 0) {
-		printf(RED "Array index should be more than 0 but it's %d.\n" RESET, n);
+		printf(BRED"Array index should be more than 0 but it's %d.\n" RESET, n);
 		exit(0);
 	}
 
 	if (n >= v->arraySize) {
-		printf(RED "Array size exceded for %s: %d, where maximum index is %d.\n" RESET, id, n, v->arraySize - 1);
+		printf(BRED"Array size exceded for %s: %d, where maximum index is %d.\n" RESET, id, n, v->arraySize - 1);
 		exit(0);
 	}
 
 	if (v->type == String && exp_2->type != String || v->type != String && exp_2->type == String) {
-		printf(RED "Data type should match for variable %s[%d].\n" RESET, id, n);
+		printf(BRED"Data type should match for variable %s[%d].\n" RESET, id, n);
 		exit(0);
 	}
 
@@ -684,21 +739,21 @@ void pushArray(char* id, int type, struct var* exp) {
 	}
 
 	if (exp->type == String) {
-		printf(RED "Array types cannot be declared with string expressions.\n" RESET);
+		printf(BRED"Array types cannot be declared with string expressions.\n" RESET);
 		exit(0);
 	}
 
 	int n = (int)exp->array[0];
 
 	if (n <= 0) {
-		printf(RED "The array size should be at least 1.\n" RESET);
+		printf(BRED"The array size should be at least 1.\n" RESET);
 		exit(0);
 	}
 
 	struct var *v = variables + totalVar;
 
 	if (v->type == String && exp->type != String || v->type != String && exp->type == String) {
-		printf(RED "Data types should match.\n" RESET);
+		printf(BRED"Data types should match.\n" RESET);
 		exit(0);
 	}
 
@@ -964,7 +1019,7 @@ char* defToDataType(int n) {
 		return "Bool";
 		break;
 	case Character:
-		return "Character";
+		return "Char";
 		break;
 	case Integer:
 		return "Integer";
@@ -991,5 +1046,5 @@ int main (void) {
 
 void yyerror (char *s) 
 {
-	printf (RED"Error: %s line %d\n"RESET, s,yylineno);
+	printf (BRED"Error: %s line %d\n"RESET, s,yylineno);
 }
