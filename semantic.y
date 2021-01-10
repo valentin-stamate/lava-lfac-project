@@ -23,10 +23,6 @@ struct var {
 	int type;
 	int cnst;
 
-	// normal type
-	int type;
-	int cnst;
-
 	// array
 	int arraySize;
 	double array[100];
@@ -843,8 +839,8 @@ void printValue(struct var* node) {
 			printf("}\n");
 			break;
 		}
-
-		printf("%d\n", (int)node->array[0]);
+		if (node->var_type == TYPE_NORMAL)
+			printf("%d\n", (int)node->array[0]);
 		break;
 	case Character:
 		if (node->var_type == TYPE_ARRAY) {
@@ -857,7 +853,8 @@ void printValue(struct var* node) {
 			printf("}\n");
 			break;
 		}
-		printf("%c\n", (char)node->array[0]);
+		if (node->var_type == TYPE_NORMAL)
+			printf("%c\n", (char)node->array[0]);
 		break;
 	case Float:
 		if (node->var_type == TYPE_ARRAY) {
@@ -870,7 +867,8 @@ void printValue(struct var* node) {
 			printf("}\n");
 			break;
 		}
-		printf("%f\n", (float)node->array[0]);
+		if (node->var_type == TYPE_NORMAL)
+			printf("%f\n", (float)node->array[0]);
 		break;
 	case String:
 		if (node->var_type == TYPE_ARRAY) {
@@ -883,7 +881,8 @@ void printValue(struct var* node) {
 			printf("}\n");
 			break;
 		}
-		printf("%s\n", (char*)node->arrayStr[0]);
+		if (node->var_type == TYPE_NORMAL)
+			printf("%s\n", (char*)node->arrayStr[0]);
 		break;
 	case Bool:
 		if (node->var_type == TYPE_ARRAY) {
@@ -896,7 +895,8 @@ void printValue(struct var* node) {
 			printf("}\n");
 			break;
 		}
-		printf("%d\n", (int)node->array[0]);
+		if (node->var_type == TYPE_NORMAL)
+			printf("%d\n", (int)node->array[0]);
 		break;
 	default:
 		break;
