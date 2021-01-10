@@ -11,17 +11,31 @@ extern FILE* yyin;
 extern int yylineno;
 int lineError = 0;
 
-struct var {
-	int type;
-	int isArray;
-	
-	char id[100];
+#define TYPE_NORMAL 1
+#define TYPE_ARRAY 2
+#define TYPE_FUNCTION 3
 
+struct var {
+	char id[100];
+	int var_type;
+
+	// normal type
+	int type;
+	int cnst;
+
+	// array
 	int arraySize;
 	double array[100];
 	char arrayStr[100][1000];
+	
+	// function
+	int parameterNum;
+	int parameterTypes[10];
+};
 
-	int cnst;
+struct parameter {
+	int paramNum;
+	int parameterTypes[10];
 };
 
 struct var* initializeVar();
@@ -52,6 +66,11 @@ void print_simbol_table(struct var*,int);
 void pushArray(char*, int, struct var*);
 void updateArrValue(char*, struct var*, struct var*);
 void Eval_function(struct var*);
+
+void pushParam(struct parameter*, int);
+struct parameter* initializeParam(int);
+void pushFunction(char*, int, struct parameter*);
+char* defToDataType(int);
 %}
 
 %union {
@@ -59,11 +78,10 @@ void Eval_function(struct var*);
 	char string[1000]; 
 	int type_id; 
 	struct var* strct;
+	struct parameter* funParam;
 }     
 
 %start program
-
-
 
 %token print
 
@@ -85,7 +103,8 @@ void Eval_function(struct var*);
 
 %token <string> String_Value Character_Value
 
-%type <type_id> paramentru lista_param more_params
+%type <type_id> paramentru
+%type<funParam> lista_param more_params
 
 %token EVAL
 
@@ -101,7 +120,6 @@ void Eval_function(struct var*);
 %nonassoc IF ELSE ELIF
 
 %right EQUAL
-
 
 %left EQEQ
 %left GEQ LEQ LS GE
@@ -212,18 +230,18 @@ smtm_type 	: assignment ';'			{;}
 
 
 
-FUNCTION 	: DATA_TYPE FUN IDENTIFIER '(' lista_param ')' smtm_fun 		{;}
+FUNCTION 	: DATA_TYPE FUN IDENTIFIER '(' lista_param ')' smtm_fun 		{pushFunction($3, $1, $5);}
 			;
 
-lista_param : more_params
-			| {;}
+lista_param : more_params													{$$ = $1;}
+			| 																{$$ = initializeParam(0);}
 			;
 
-more_params : paramentru
-			| more_params ',' paramentru
+more_params : paramentru													{$$ = initializeParam($1);}
+			| more_params ',' paramentru									{pushParam($$, $3);}
 			;
 
-paramentru  : DATA_TYPE IDENTIFIER
+paramentru  : DATA_TYPE IDENTIFIER											{$$ = $1;}
 			;
 
 
@@ -233,6 +251,44 @@ smtm_fun	: '{' smtm_types RETURN exp ';' '}' 		{;}
 
 %%
 
+void pushFunction(char* id, int retType, struct parameter* p) {
+	int i = getVariableIndex(id);
+
+	if (i != -1) {
+		printf("Name for function %s was already taken\n", id);
+		exit(0);
+	}
+
+	struct var *v = variables + totalVar;
+	
+	sprintf(v->id, "%s", id);
+	v->var_type = TYPE_FUNCTION;
+	v->type = retType;
+	v->parameterNum = p->paramNum;
+	for (int i = 0; i < p->paramNum; i++) {
+		v->parameterTypes[i] = p->parameterTypes[i];
+	}
+
+	free(p);
+	totalVar++;
+}
+
+void pushParam(struct parameter* p, int type) {
+	p->parameterTypes[p->paramNum++] = type;	
+}
+
+struct parameter* initializeParam(int type) {
+	struct parameter *p = (struct parameter*)malloc(sizeof(struct parameter));
+	if (type == 0) {
+		p->paramNum = 0;
+		return p;
+	}
+
+	p->paramNum = 1;
+	p->parameterTypes[0] = type;
+
+	return p;
+}
 
 void Eval_function(struct var* x)
 {
@@ -261,7 +317,7 @@ void print_simbol_table(struct var* v,int n)
  	for(int i=0;i<n;i++)
 	{
 		fprintf(fd,"nume : %s  ",v[i].id);
-		if(!v[i].isArray)
+		if(!v[i].var_type == TYPE_ARRAY)
 		{
 			switch (v[i].type) {
 			case Integer:
@@ -362,24 +418,29 @@ struct var* temporaryPointVar(char* id) {
 	int i = getVariableIndex(id);
 
 	if (i == -1) {
-		printf("Variable %s was not declared in this scope\n", id);
+		printf("%s was not declared in this scope\n", id);
 		exit(0);
 	}
+	struct var* v = variables + i;
+	
+	if (v->var_type == TYPE_FUNCTION) {
+		v->array[0] = 0;
+	}
 
-	return variables + i;
+	return v;
 }
 
 struct var* temporaryPointArr(char* id, struct var* node) {
 	int i = getVariableIndex(id);
 
 	if (i == -1) {
-		printf("Variable %s was not declared in this scope\n", id);
+		printf("%s was not declared in this scope\n", id);
 		exit(0);
 	}
 
 	struct var *v = variables + i;
 
-	if (v->isArray == 0) {
+	if (v->var_type != TYPE_ARRAY) {
 		printf(RED "Varialbe %s is not an array type.\n" RESET, v->id);
 		exit(0);
 	}
@@ -437,18 +498,23 @@ void updateValue(char* id, struct var* exp) {
 	int i = getVariableIndex(id);
 
 	if (i == -1) {
-		printf("Variable %s was not declared in this scope\n", id);
+		printf("%s was not declared in this scope\n", id);
 		exit(0);
 	} 
 
 	struct var *vr = variables + i;
 	
-	if (vr->isArray && !exp->isArray) {
+	if (vr->var_type == TYPE_FUNCTION) {
+		printf(RED "Function %s cannot be changed.\n" RESET, vr->id);
+		exit(0);
+	}
+
+	if (vr->var_type == TYPE_ARRAY && exp->var_type != TYPE_ARRAY) {
 		printf(RED "Variable %s is an array type but the expression is not.\n" RESET, vr->id);
 		exit(0);
 	}
 
-	if (!vr->isArray && exp->isArray) {
+	if (vr->var_type != TYPE_ARRAY && exp->var_type == TYPE_ARRAY) {
 		printf(RED "Variable %s is a normal type but expression is an array.\n" RESET, vr->id);
 		exit(0);
 	}
@@ -464,7 +530,7 @@ void updateValue(char* id, struct var* exp) {
 		exit(0);
 	} 
 
-	if (vr->isArray && exp->isArray) {
+	if (vr->var_type == TYPE_ARRAY && exp->var_type == TYPE_ARRAY) {
 
 		int n = vr->arraySize;
 		int m = exp->arraySize;
@@ -496,11 +562,16 @@ void updateArrValue(char* id, struct var* exp_1, struct var* exp_2) {
 	int i = getVariableIndex(id);
 
 	if (i == -1) {
-		printf("Variable %s was not declared in this scope\n", id);
+		printf("%s was not declared in this scope.\n", id);
 		exit(0);
 	}
 
 	struct var *v = variables + i;
+
+	if (v->var_type == TYPE_FUNCTION) {
+		printf(RED "Invalid expression for function %s.\n" RESET, v->id);
+		exit(0);
+	}
 
 	if (exp_1->type == String) {
 		printf(RED "This array type cannot be accessed with a string expression.\n" RESET);
@@ -609,7 +680,7 @@ void pushArray(char* id, int type, struct var* exp) {
 
 	sprintf(v->id, "%s", id);
 	v->type = type;
-	v->isArray = 1;
+	v->var_type = TYPE_ARRAY;
 	v->arraySize = n;
 
 	totalVar++;
@@ -734,7 +805,7 @@ void printValue(struct var* node) {
 
 	switch (type) {
 	case Integer:
-		if (node->isArray == 1) {
+		if (node->var_type == TYPE_ARRAY) {
 			n = node->arraySize;
 			printf("{");
 			for (int i = 0; i < n - 1; i++) {
@@ -744,10 +815,11 @@ void printValue(struct var* node) {
 			printf("}\n");
 			break;
 		}
+
 		printf("%d\n", (int)node->array[0]);
 		break;
 	case Character:
-		if (node->isArray == 1) {
+		if (node->var_type == TYPE_ARRAY) {
 			n = node->arraySize;
 			printf("{");
 			for (int i = 0; i < n - 1; i++) {
@@ -760,7 +832,7 @@ void printValue(struct var* node) {
 		printf("%c\n", (char)node->array[0]);
 		break;
 	case Float:
-		if (node->isArray == 1) {
+		if (node->var_type == TYPE_ARRAY) {
 			n = node->arraySize;
 			printf("{");
 			for (int i = 0; i < n - 1; i++) {
@@ -773,7 +845,7 @@ void printValue(struct var* node) {
 		printf("%f\n", (float)node->array[0]);
 		break;
 	case String:
-		if (node->isArray == 1) {
+		if (node->var_type == TYPE_ARRAY) {
 			n = node->arraySize;
 			printf("{");
 			for (int i = 0; i < n - 1; i++) {
@@ -786,7 +858,7 @@ void printValue(struct var* node) {
 		printf("%s\n", (char*)node->arrayStr[0]);
 		break;
 	case Bool:
-		if (node->isArray == 1) {
+		if (node->var_type == TYPE_ARRAY) {
 			n = node->arraySize;
 			printf("{");
 			for (int i = 0; i < n - 1; i++) {
@@ -802,8 +874,21 @@ void printValue(struct var* node) {
 		break;
 	}
 
-}
+	if (node->var_type == TYPE_FUNCTION) {
+		printf("%s %s", defToDataType(node->type), node->id);
+		n = node->parameterNum;
+		if (n != 0) {
+			printf(" -> {");
+			for (int i = 0; i < n - 1; i++) {
+				printf("%s, ", defToDataType(node->parameterTypes[i]));
+			}
+			printf("%s}", defToDataType(node->parameterTypes[n - 1]));
+		}
 
+		printf("\n");
+	}
+
+}
 
 struct var* initializeVar() {
 	struct var* v = (struct var*)malloc(sizeof(struct var));
@@ -812,12 +897,38 @@ struct var* initializeVar() {
 	sprintf(v->arrayStr[0], "%s", "");
 
 	v->array[0] = 0;
-	v->isArray = 0;
+	v->var_type = TYPE_NORMAL;
 
 	return v;
 }
 
+char* defToDataType(int n) {
+	switch (n) {
+	case Bool:
+		return "Bool";
+		break;
+	case Character:
+		return "Character";
+		break;
+	case Integer:
+		return "Integer";
+		break;
+	case Float:
+		return "Float";
+		break;
+	case String:
+		return "String";
+		break;
+	}
+	return "";
+}
+
 int main (void) {
+
+	for (int i = 0; i < 100; i++) {
+		variables[i].var_type = TYPE_NORMAL;
+	}
+
     yyin = fopen("input", "r");
 	return yyparse();
 }
