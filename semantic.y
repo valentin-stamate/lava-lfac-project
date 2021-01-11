@@ -27,10 +27,11 @@ struct var {
 	int arraySize;
 	double array[100];
 	char arrayStr[100][1000];
+	int isInitilalized[100];
 	
 	// function
-	int parameterNum;
 	int parameterTypes[10];
+	int parameterNum;
 };
 
 struct parameter {
@@ -529,8 +530,13 @@ struct var* temporaryPointVar(char* id) {
 		printf(BYEL "%s" BRED " was not declared in this scope.\n", id);
 		exit(0);
 	}
+	
 	struct var* v = variables + i;
 	
+	if (v->var_type == TYPE_NORMAL && v->isInitilalized[0] == 0) {
+		printf(BYEL "%s was not initialzied. The default value will be used. Line %d.\n" RESET, id, yylineno);
+	}
+
 	if (v->var_type == TYPE_FUNCTION) {
 		v->array[0] = 0;
 	}
@@ -573,6 +579,10 @@ struct var* temporaryPointArr(char* id, struct var* node) {
 	struct var *exp = initializeVar();
 
 	exp->type = v->type;
+
+	if (v->var_type == TYPE_ARRAY && v->isInitilalized[n] == 0) {
+		printf(BYEL "%s[%d] was not initialzied. The default value will be used. Line %d.\n" RESET, id, n, yylineno);
+	}
 
 	if (v->type == String) {
 		sprintf(exp->arrayStr[0], "%s", v->arrayStr[n]);
@@ -655,6 +665,7 @@ void updateValue(char* id, struct var* exp) {
 		return;
 	}
 
+	vr->isInitilalized[0] = 1;
 	if (vr->type == String) {
 		sprintf(vr->arrayStr[0], "%s", exp->arrayStr[0]);
 	} else if (vr->type == Bool) {
@@ -702,6 +713,8 @@ void updateArrValue(char* id, struct var* exp_1, struct var* exp_2) {
 		exit(0);
 	}
 
+	v->isInitilalized[n] = 1;
+
 	if (v->type == String) {
 		sprintf(v->arrayStr[n], "%s", exp_2->arrayStr[0]);
 	} else if (v->type == Bool) {
@@ -745,7 +758,7 @@ void pushVariable(char* id, int type, struct var* exp) {
 	
 	sprintf(v->id, "%s", id);
 	v->type = type;
-
+	v->isInitilalized[0] = 1;
 	if (type == String) {
 		sprintf(v->arrayStr[0], "%s", exp->arrayStr[0]);
 	} else if (type == Bool) {
@@ -814,6 +827,7 @@ void pushVariableConst(char* id, int type, struct var* exp) {
 		v->array[0] = exp->array[0];
 	}
     v->cnst=1;
+	v->isInitilalized[0] = 1;
 	freeVar(exp);
 	totalVar++;
 }
@@ -1106,6 +1120,7 @@ int main (void) {
 
 	for (int i = 0; i < 100; i++) {
 		variables[i].var_type = TYPE_NORMAL;
+		variables[i].isInitilalized[0] = 0;
 	}
 
     yyin = fopen("input", "r");
