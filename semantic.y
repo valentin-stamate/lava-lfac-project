@@ -854,6 +854,12 @@ struct var* comp(struct var* a, struct var* b, int op_type) {
 			break;
 		}
 
+		if (a->type == Character) {
+			v->type = Character;
+			v->array[0] = (int)(a->array[0] + b->array[0]);
+			break;
+		}
+
 		c = a->array[0] + b->array[0];
 
 		if (c == (int)c) {
@@ -865,6 +871,13 @@ struct var* comp(struct var* a, struct var* b, int op_type) {
 		}
 		break;
 	case MINUS:;
+
+		if (a->type == Character) {
+			v->type = Character;
+			v->array[0] = (int)(a->array[0] - b->array[0]);
+			break;
+		}
+
 		c = a->array[0] - b->array[0];
 
 		if (c == (int)c) {
@@ -991,7 +1004,7 @@ void printValue(struct var* node) {
 			break;
 		}
 		if (node->var_type == TYPE_NORMAL)
-			printf("%c\n", (char)node->array[0]);
+			printf("'%c'\n", (char)node->array[0]);
 		break;
 	case Float:
 		if (node->var_type == TYPE_ARRAY) {

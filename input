@@ -4,7 +4,7 @@ Define Type
  Float y;
 } x;
 
-print "abcd" > "abcc";
+print 'a' + 1;
 
 Integer a = 9 == 1 + 8;
 Float d = 6.456;
