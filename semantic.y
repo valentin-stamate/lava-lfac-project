@@ -823,6 +823,8 @@ struct var* comp(struct var* a, struct var* b, int op_type) {
 	struct var* v = initializeVar();
 	double c;
 
+	int n;
+
 	switch (op_type) {
 	case PLUS:;
 		if (a->type == String && b->type == String) {
@@ -906,24 +908,49 @@ struct var* comp(struct var* a, struct var* b, int op_type) {
 		}
 		break;
 	case LS:;
+		if (a->type == String && b->type == String) {
+			n = strcmp(a->arrayStr[0], b->arrayStr[0]);
+			v->array[0] = n == -1;
+		} else {
+			v->array[0] = (int)(a->array[0] < b->array[0]);
+		}
 		v->type = Integer;
-		v->array[0] = (int)(a->array[0] < b->array[0]);
 		break;
 	case LEQ:;
+		if (a->type == String && b->type == String) {
+			n = strcmp(a->arrayStr[0], b->arrayStr[0]);
+			v->array[0] = n == -1 || n == 0;
+		} else {
+			v->array[0] = (int)(a->array[0] <= b->array[0]);
+		}
 		v->type = Integer;
-		v->array[0] = (int)(a->array[0] <= b->array[0]);
 		break;
 	case GE:;
+		if (a->type == String && b->type == String) {
+			n = strcmp(a->arrayStr[0], b->arrayStr[0]);
+			v->array[0] = n == 1;
+		} else {
+			v->array[0] = (int)(a->array[0] > b->array[0]);
+		}
 		v->type = Integer;
-		v->array[0] = (int)(a->array[0] > b->array[0]);
 		break;
 	case GEQ:;
+		if (a->type == String && b->type == String) {
+			n = strcmp(a->arrayStr[0], b->arrayStr[0]);
+			v->array[0] = n == 1 || n == 0;
+		} else {
+			v->array[0] = (int)(a->array[0] >= b->array[0]);
+		}
 		v->type = Integer;
-		v->array[0] = (int)(a->array[0] >= b->array[0]);
 		break;
 	case EQEQ:;
+		if (a->type == String && b->type == String) {
+			n = strcmp(a->arrayStr[0], b->arrayStr[0]);
+			v->array[0] = n == 0;
+		} else {
+			v->array[0] = (int)(a->array[0] == b->array[0]);
+		}
 		v->type = Integer;
-		v->array[0] = (int)(a->array[0] == b->array[0]);
 		break;
 	}
 
