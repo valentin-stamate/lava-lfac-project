@@ -9,7 +9,7 @@
 - [x] Variables/Functions cannot be redeclared
 - [x] Const variables that cannot be changed after declaration
 - [x] Function call signature must match
-- [x] `print exp` expression
+- [x] `print exp`
 - [x] `Eval(exp)` function that taken an Integer expression
 
 To get a better idea, look into `input` file.
